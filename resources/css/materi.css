@@ -1,0 +1,97 @@
+.materi-container {
+  animation: fadeIn 0.6s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ======== Styling Umum ======== */
+body {
+    background: linear-gradient(135deg, #eef2ff, #fafafa);
+    font-family: 'Poppins', sans-serif;
+}
+
+.level-buttons button {
+    margin: 0.3rem;
+    transition: all 0.3s ease;
+}
+
+.level-buttons button:hover:not(:disabled) {
+    transform: scale(1.05);
+}
+
+.card {
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background-color: #ffffff;
+}
+
+.card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.card-img-top {
+    height: 180px;
+    object-fit: cover;
+}
+
+.card-body h5 {
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+.progress {
+    height: 8px;
+    border-radius: 1rem;
+}
+
+.locked {
+    filter: grayscale(0.8);
+    opacity: 0.7;
+}
+
+/* Tombol Mulai Belajar */
+.card .btn {
+    border-radius: 2rem;
+    font-weight: 500;
+}
+.card .btn:hover {
+    background-color: #2563eb;
+    color: #ffffff;
+}
+.card .btn:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+}
+.card .btn:disabled:hover {
+    background-color: #9ca3af;
+}
+/* Responsif */
+@media (max-width: 768px) {
+    .card-img-top {
+        height: 150px;
+    }
+}
+@media (max-width: 576px) {
+    .card-img-top {
+        height: 120px;
+    }
+}
+@media (max-width: 400px) {
+    .card-img-top {
+        height: 100px;
+    }
+}
+/* Animasi Transisi Halaman */
+.materi-container {
+  animation: fadeIn 0.6s ease-in-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
