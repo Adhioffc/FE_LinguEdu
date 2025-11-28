@@ -18,7 +18,12 @@ Route::view('/', 'home')->name('home');
 Route::view('/login', 'auth.login')->name('login.simulasi');
 
 // Register Page UI
-Route::view('/register', 'auth.register')->name('register.simulasi');
+Route::get('/register', function () {
+    $response = Http::get('http://127.0.0.1:8000/api/paket');
+    $paket = $response->json('data');
+
+    return view('auth.register', compact('paket'));
+})->name('register.simulasi');
 
 // Logout UI (sementara pakai session simulasi)
 Route::get('/logout', function () {
