@@ -46,6 +46,7 @@
                                 <th class="py-2 px-3 border">Email</th>
                                 <th class="py-2 px-3 border">Role</th>
                                 <th class="py-2 px-3 border">Status</th>
+                                <th class="py-2 px-3 border text-center">Bukti TF</th>
 
                                 {{-- 4 kolom aksi terpisah --}}
                                 <th class="py-2 px-3 border text-center">Detail</th>
@@ -58,13 +59,24 @@
                         <tbody>
                             @foreach ($users as $user)
                                 @php
-                                    $isActive = !empty($user['email_verified_at']);
+                                    $isActive = !empty($user['email_verified_at'] ?? null);
+
+                                    // relasi dari API bisa muncul sebagai 'latestRegistrasi' atau 'latest_registrasi'
+                                    $latest = $user['latest_registrasi'] ?? ($user['latestRegistrasi'] ?? null);
+                                    $buktiPath = $latest['bukti_byr'] ?? null; // contoh: "foto_bukti/xxx.png"
+
+                                    // kalau ada bukti → ambil dari backend: http://127.0.0.1:8000/storage/foto_bukti/xxx.png
+                                    // kalau tidak ada → null (nanti ditampilkan teks "Tidak ada")
+                                    $buktiUrl = $buktiPath
+                                        ? 'http://127.0.0.1:8000/storage/' . ltrim($buktiPath, '/')
+                                        : null;
                                 @endphp
 
                                 <tr>
                                     <td class="py-2 px-3 border">{{ $user['name'] }}</td>
                                     <td class="py-2 px-3 border">{{ $user['email'] }}</td>
                                     <td class="py-2 px-3 border">{{ $user['role'] ?? '-' }}</td>
+
                                     <td class="py-2 px-3 border">
                                         <span
                                             class="px-2 py-1 rounded-full text-xs font-semibold {{ $isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
@@ -72,18 +84,28 @@
                                         </span>
                                     </td>
 
+                                    {{-- BUKTI TRANSFER (ambil dari tabel registrasi_kursus lewat relasi latestRegistrasi) --}}
+                                    <td class="py-2 px-3 border text-center">
+                                        @if ($buktiUrl)
+                                            <img src="{{ $buktiUrl }}" alt="Bukti Transfer"
+                                                class="w-16 h-16 object-cover rounded-md mx-auto cursor-pointer"
+                                                onclick="window.open('{{ $buktiUrl }}', '_blank')">
+                                        @else
+                                            <span class="text-xs text-gray-400">Tidak ada</span>
+                                        @endif
+                                    </td>
+
                                     {{-- DETAIL --}}
                                     <td class="py-2 px-3 border text-center">
                                         <button type="button" title="Detail"
                                             onclick="showUserDetail(
-                    {{ json_encode($user['name']) }},
-                    {{ json_encode($user['email']) }},
-                    {{ json_encode($user['role'] ?? '-') }},
-                    {{ json_encode($isActive ? 'Aktif' : 'Belum Aktif') }}
-                )"
+                        {{ json_encode($user['name']) }},
+                        {{ json_encode($user['email']) }},
+                        {{ json_encode($user['role'] ?? '-') }},
+                        {{ json_encode($isActive ? 'Aktif' : 'Belum Aktif') }}
+                    )"
                                             class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-blue-200 text-blue-600 hover:bg-blue-50">
-                                            {{-- icon mata sederhana --}}
-                                            <span class="text-xs font-bold">i</span>
+                                            👁
                                         </button>
                                     </td>
 
@@ -91,14 +113,14 @@
                                     <td class="py-2 px-3 border text-center">
                                         <button type="button" title="Edit"
                                             onclick="showEditForm(
-                    {{ $user['id'] }},
-                    {{ json_encode($user['name']) }},
-                    {{ json_encode($user['email']) }},
-                    {{ json_encode($user['role'] ?? 'member') }},
-                    {{ $isActive ? 'true' : 'false' }}
-                )"
+                        {{ $user['id'] }},
+                        {{ json_encode($user['name']) }},
+                        {{ json_encode($user['email']) }},
+                        {{ json_encode($user['role'] ?? 'member') }},
+                        {{ $isActive ? 'true' : 'false' }}
+                    )"
                                             class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-yellow-200 text-yellow-600 hover:bg-yellow-50">
-                                            <span class="text-xs font-bold">✏️</span>
+                                            ✏️
                                         </button>
                                     </td>
 
@@ -107,19 +129,17 @@
                                         <button type="button" title="Hapus"
                                             onclick="showDelete({{ $user['id'] }}, {{ json_encode($user['name']) }})"
                                             class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-red-200 text-red-600 hover:bg-red-50">
-                                            <span class="text-xs font-bold">🗑</span>
+                                            🗑
                                         </button>
                                     </td>
 
-                                    {{-- AKTIF / NONAKTIF (hanya member) --}}
+                                    {{-- AKTIF / NONAKTIF --}}
                                     <td class="py-2 px-3 border text-center">
                                         @if (($user['role'] ?? 'member') === 'member')
                                             <button type="button" title="{{ $isActive ? 'Nonaktifkan' : 'Aktifkan' }}"
                                                 onclick="toggleActive({{ $user['id'] }})"
                                                 class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-green-200 text-green-600 hover:bg-green-50">
-                                                <span class="text-xs font-bold">
-                                                    {{ $isActive ? '⛔' : '✓' }}
-                                                </span>
+                                                {{ $isActive ? '⛔' : '✓' }}
                                             </button>
                                         @else
                                             <span class="text-gray-300 text-xs">—</span>
@@ -127,9 +147,8 @@
                                     </td>
                                 </tr>
                             @endforeach
-
-
                         </tbody>
+
                     </table>
                 </div>
             </div>

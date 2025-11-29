@@ -99,12 +99,16 @@ Route::get('/admin/dashboard', function () {
 //         'users' => $users
 //     ]);
 // })->name('admin.users');
+// routes/web.php
+// Route::get('/admin/users', function () {
+//     $response = Http::get('http://127.0.0.1:8000/api/admin/users');
+//     $users = $response->json();
+
+//     return view('Admin.Pages.users', compact('users'));
+// })->name('admin.users');
 Route::get('/admin/users', function () {
-
-    // Ambil data dari backend API
     $response = Http::get('http://127.0.0.1:8000/api/admin/users');
-
-    $users = $response->json();
+    $users = $response->json() ?? [];
 
     return view('Admin.Pages.users', compact('users'));
 })->name('admin.users');
@@ -112,3 +116,4 @@ Route::view('/admin/paket', 'Admin.Pages.paket')->name('admin.paket');
 Route::view('/admin/materi', 'Admin.Pages.materi')->name('admin.materi');
 Route::view('/admin/kuis', 'Admin.Pages.kuis')->name('admin.kuis');
 Route::view('/admin/sertifikasi', 'Admin.Pages.sertifikasi')->name('admin.sertifikasi');
+
