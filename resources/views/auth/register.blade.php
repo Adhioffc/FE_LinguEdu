@@ -295,6 +295,9 @@
             const successPaket = document.getElementById('successPaket');
             const successBahasa = document.getElementById('successBahasa');
             const successExpiry = document.getElementById('successExpiry');
+            const successTotal = document.getElementById('successTotal');
+            const successTgl = document.getElementById('successTgl');
+
 
             const backToPaketBtn = document.getElementById('backToPaket');
             const backToLangBtn = document.getElementById('backToLang');
@@ -442,11 +445,27 @@
 
                     const data = res.data;
 
-                    // Tampilkan dari backend
                     successNama.textContent = data.user.name;
                     successPaket.textContent = data.kursus.paket.nama_paket;
                     successBahasa.textContent = data.kursus.bahasa.nama_bahasa;
 
+                    // ⬇️ Tambahan: total bayar
+                    if (successTotal) {
+                        const total = Number(data.registrasi.total_byr || 0);
+                        successTotal.textContent = 'Rp ' + total.toLocaleString('id-ID');
+                    }
+
+                    // ⬇️ Tambahan: tanggal transaksi (ambil dari backend)
+                    if (successTgl && data.registrasi.tgl_trans) {
+                        const tgl = new Date(data.registrasi.tgl_trans);
+                        successTgl.textContent = tgl.toLocaleDateString('id-ID', {
+                            day: '2-digit',
+                            month: 'long',
+                            year: 'numeric',
+                        });
+                    }
+
+                    // Expiry masih pakai +1 tahun (boleh tetap)
                     const expiry = new Date();
                     expiry.setFullYear(expiry.getFullYear() + 1);
                     successExpiry.textContent = expiry.toLocaleDateString('id-ID', {
@@ -455,7 +474,7 @@
                         day: 'numeric'
                     });
 
-                    goToStep(3); // Step 4 sukses
+                    goToStep(3);; // Step 4 sukses
                 } catch (error) {
                     console.error(error);
                     const msg = error.response?.data?.message || 'Terjadi kesalahan saat registrasi.';
