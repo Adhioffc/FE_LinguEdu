@@ -112,8 +112,12 @@ Route::get('/admin/users', function () {
 
     return view('Admin.Pages.users', compact('users'));
 })->name('admin.users');
+// UI Paket (Blade)
 Route::view('/admin/paket', 'Admin.Pages.paket')->name('admin.paket');
+
+// UI Bahasa (Blade) –> file: resources/views/Admin/Pages/bahasa.blade.php
+Route::view('/admin/bahasa', 'Admin.Pages.bahasa')->name('admin.bahasa');
+
 Route::view('/admin/materi', 'Admin.Pages.materi')->name('admin.materi');
 Route::view('/admin/kuis', 'Admin.Pages.kuis')->name('admin.kuis');
 Route::view('/admin/sertifikasi', 'Admin.Pages.sertifikasi')->name('admin.sertifikasi');
-

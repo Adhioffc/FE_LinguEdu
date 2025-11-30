@@ -59,6 +59,12 @@
                     <h3 class="text-green-700 font-semibold mb-1">📦 Setting Paket</h3>
                     <p class="text-sm text-gray-600">Atur paket langganan & harga.</p>
                 </a>
+                {{-- Setting bahasa --}}
+                <a href="{{ route('admin.bahasa') }}"
+                    class="p-4 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 transition shadow-sm block">
+                    <h3 class="text-green-700 font-semibold mb-1">📦 Setting Bahasa</h3>
+                    <p class="text-sm text-gray-600">Atur bahasa.</p>
+                </a>
 
                 {{-- Setting Materi --}}
                 <a href="{{ route('admin.materi') }}"
