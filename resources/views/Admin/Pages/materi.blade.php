@@ -45,16 +45,25 @@
 
             <h2 class="text-2xl font-semibold mb-4 text-gray-800">Tambah Materi</h2>
 
-            {{-- KURSUS --}}
+            {{-- PAKET --}}
             <div class="mb-4">
-                <label class="font-semibold text-sm">Kursus (Bahasa + Paket)</label>
-                <select id="addCourse" class="w-full border p-2 rounded-lg mt-1 text-sm bg-gray-50">
-                    <option value="">-- Pilih Kursus --</option>
+                <label class="font-semibold text-sm">Paket</label>
+                <select id="addPaket" class="w-full border p-2 rounded-lg mt-1 text-sm bg-gray-50">
+                    <option value="">-- Pilih Paket --</option>
+                </select>
+            </div>
+
+            {{-- BAHASA --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Bahasa</label>
+                <select id="addBahasa" class="w-full border p-2 rounded-lg mt-1 text-sm bg-gray-50">
+                    <option value="">-- Pilih Bahasa --</option>
                 </select>
                 <p class="text-xs text-gray-500 mt-1">
-                    Kursus adalah kombinasi bahasa + paket. Buat dulu kursusnya, baru bisa tambah materi.
+                    Sistem akan otomatis membuat/mencari kursus dari kombinasi paket + bahasa ini.
                 </p>
             </div>
+
 
             {{-- LEVEL --}}
             <div class="mb-4">
@@ -79,7 +88,7 @@
                 <input id="addUrlVideo" type="text" class="w-full border p-2 rounded-lg mt-1 text-sm"
                     placeholder="https://... (YouTube / link video)">
                 <p class="text-xs text-gray-500 mt-1">
-                    Isi jika materi ini punya video. Kalau kosong, tidak akan dibuat materi video.
+                    Isi jika materi ini punya video. Kalau kosong, bagian video akan dikosongkan.
                 </p>
             </div>
 
@@ -89,7 +98,7 @@
                 <textarea id="addTeksTeori" rows="5" class="w-full border p-2 rounded-lg mt-1 text-sm"
                     placeholder="Isi materi teori di sini..."></textarea>
                 <p class="text-xs text-gray-500 mt-1">
-                    Isi jika materi ini punya teks teori. Kalau kosong, tidak akan dibuat materi teori.
+                    Isi jika materi ini punya teks teori. Kalau kosong, bagian teori akan dikosongkan.
                 </p>
             </div>
 
@@ -114,13 +123,22 @@
 
             <input type="hidden" id="editIndex">
 
-            {{-- KURSUS --}}
+            {{-- PAKET --}}
             <div class="mb-4">
-                <label class="font-semibold text-sm">Kursus (Bahasa + Paket)</label>
-                <select id="editCourse" class="w-full border p-2 rounded-lg mt-1 text-sm bg-gray-50">
-                    <option value="">-- Pilih Kursus --</option>
+                <label class="font-semibold text-sm">Paket</label>
+                <select id="editPaket" class="w-full border p-2 rounded-lg mt-1 text-sm bg-gray-50">
+                    <option value="">-- Pilih Paket --</option>
                 </select>
             </div>
+
+            {{-- BAHASA --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Bahasa</label>
+                <select id="editBahasa" class="w-full border p-2 rounded-lg mt-1 text-sm bg-gray-50">
+                    <option value="">-- Pilih Bahasa --</option>
+                </select>
+            </div>
+
 
             {{-- LEVEL --}}
             <div class="mb-4">
@@ -135,25 +153,15 @@
                 <input id="editJudul" type="text" class="w-full border p-2 rounded-lg mt-1 text-sm">
             </div>
 
-            {{-- TIPE (karena satu record = satu tipe) --}}
+            {{-- URL VIDEO (opsional) --}}
             <div class="mb-4">
-                <label class="font-semibold text-sm">Tipe Materi</label>
-                <select id="editTipe" class="w-full border p-2 rounded-lg mt-1 text-sm bg-gray-50"
-                    onchange="toggleEditTipe()">
-                    <option value="video">Video</option>
-                    <option value="teori">Teori (Teks)</option>
-                </select>
-            </div>
-
-            {{-- VIDEO GROUP --}}
-            <div class="mb-4" id="editVideoGroup">
-                <label class="font-semibold text-sm">URL Video</label>
+                <label class="font-semibold text-sm">URL Video (opsional)</label>
                 <input id="editUrlVideo" type="text" class="w-full border p-2 rounded-lg mt-1 text-sm">
             </div>
 
-            {{-- TEORI GROUP --}}
-            <div class="mb-4" id="editTeoriGroup">
-                <label class="font-semibold text-sm">Teks Teori</label>
+            {{-- TEKS TEORI (opsional) --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Teks Teori (opsional)</label>
                 <textarea id="editTeksTeori" rows="5" class="w-full border p-2 rounded-lg mt-1 text-sm"></textarea>
             </div>
 
@@ -191,7 +199,6 @@
         </div>
     </div>
 @endsection
-
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
@@ -203,12 +210,14 @@
         });
 
         let materis = [];
-        let courses = [];
+        let pakets = [];
+        let bahasas = [];
 
         // ===========================
-        //  HELPER
+        // Helper
         // ===========================
-        function courseLabel(course) {
+        function courseLabel(m) {
+            const course = m.course;
             if (!course) return '-';
             const bahasa = course.bahasa ? course.bahasa.nama_bahasa : null;
             const paket = course.paket ? course.paket.nama_paket : null;
@@ -222,29 +231,48 @@
             return text.slice(0, limit) + '...';
         }
 
-        function fillCourseSelect(selectEl, selectedId = null) {
-            selectEl.innerHTML = '<option value="">-- Pilih Kursus --</option>';
-            courses.forEach(c => {
+        function fillPaketSelect(selectEl, selectedId = null) {
+            selectEl.innerHTML = '<option value="">-- Pilih Paket --</option>';
+            pakets.forEach(p => {
                 const opt = document.createElement('option');
-                opt.value = c.id_course;
-                opt.textContent = courseLabel(c);
-                if (selectedId && String(selectedId) === String(c.id_course)) {
-                    opt.selected = true;
-                }
+                opt.value = p.id;
+                opt.textContent = p.nama_paket || ('Paket #' + p.id);
+                if (selectedId && String(selectedId) === String(p.id)) opt.selected = true;
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function fillBahasaSelect(selectEl, selectedId = null) {
+            selectEl.innerHTML = '<option value="">-- Pilih Bahasa --</option>';
+            bahasas.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.textContent = b.nama_bahasa || ('Bahasa #' + b.id);
+                if (selectedId && String(selectedId) === String(b.id)) opt.selected = true;
                 selectEl.appendChild(opt);
             });
         }
 
         // ===========================
-        //  LOAD DATA
+        // Load data
         // ===========================
-        async function loadCourses() {
+        async function loadPakets() {
             try {
-                const res = await api.get('/admin/kursus');
-                courses = Array.isArray(res.data.data) ? res.data.data : res.data;
+                const res = await api.get('/paket');
+                pakets = Array.isArray(res.data.data) ? res.data.data : res.data;
             } catch (e) {
                 console.error(e);
-                alert('Gagal memuat daftar kursus');
+                alert('Gagal memuat paket');
+            }
+        }
+
+        async function loadBahasas() {
+            try {
+                const res = await api.get('/bahasa');
+                bahasas = Array.isArray(res.data.data) ? res.data.data : res.data;
+            } catch (e) {
+                console.error(e);
+                alert('Gagal memuat bahasa');
             }
         }
 
@@ -265,77 +293,97 @@
 
             if (!materis.length) {
                 tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="p-6 text-center text-gray-400 text-sm">
-                            Belum ada materi.
-                        </td>
-                    </tr>`;
+            <tr>
+                <td colspan="6" class="p-6 text-center text-gray-400 text-sm">
+                    Belum ada materi.
+                </td>
+            </tr>`;
                 return;
             }
 
             const sorted = [...materis].sort((a, b) => {
                 if (a.id_course === b.id_course) {
-                    return (a.level ?? 1) - (b.level ?? 1);
+                    return (a.level || 1) - (b.level || 1);
                 }
                 return a.id_course - b.id_course;
             });
 
             sorted.forEach((m) => {
-                const tipeBadge = m.tipe === 'video' ?
-                    `<span class="inline-block px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700 font-semibold">Video</span>` :
-                    `<span class="inline-block px-2 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700 font-semibold">Teori</span>`;
-
-                let kontenPreview = '-';
-                if (m.tipe === 'video' && m.url_video) {
-                    kontenPreview = `<a href="${m.url_video}" target="_blank"
-                        class="text-blue-600 underline text-xs break-all">
-                        ${m.url_video}
-                    </a>`;
-                } else if (m.tipe === 'teori' && m.teks_teori) {
-                    kontenPreview = `<p class="text-xs text-gray-700 whitespace-pre-line">
-                        ${previewText(m.teks_teori, 120)}
-                    </p>`;
+                let tipeBadge = '';
+                switch (m.tipe) {
+                    case 'video':
+                        tipeBadge =
+                            `<span class="inline-block px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700 font-semibold">Video</span>`;
+                        break;
+                    case 'teori':
+                        tipeBadge =
+                            `<span class="inline-block px-2 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700 font-semibold">Teori</span>`;
+                        break;
+                    case 'campuran':
+                        tipeBadge =
+                            `<span class="inline-block px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-700 font-semibold">Campuran</span>`;
+                        break;
+                    default:
+                        tipeBadge =
+                            `<span class="inline-block px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-500 font-semibold">-</span>`;
                 }
 
-                // cari index asli di array materis
+                const kontenParts = [];
+                if (m.url_video) {
+                    kontenParts.push(`
+                <a href="${m.url_video}" target="_blank"
+                   class="text-blue-600 underline text-xs break-all">
+                    ${m.url_video}
+                </a>
+            `);
+                }
+                if (m.teks_teori) {
+                    kontenParts.push(`
+                <p class="text-xs text-gray-700 whitespace-pre-line">
+                    ${previewText(m.teks_teori, 120)}
+                </p>
+            `);
+                }
+                const kontenPreview = kontenParts.length ? kontenParts.join('<div class="h-2"></div>') : '-';
+
                 const originalIndex = materis.findIndex(x => x.id_materi === m.id_materi);
 
                 tbody.innerHTML += `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="p-4 font-semibold text-gray-800 align-top">
-                            ${m.judul}
-                        </td>
-                        <td class="p-4 text-sm text-gray-700 align-top">
-                            ${courseLabel(m.course)}
-                        </td>
-                        <td class="p-4 text-center align-top text-xs font-semibold">
-                            Level ${m.level ?? 1}
-                        </td>
-                        <td class="p-4 text-center align-top">
-                            ${tipeBadge}
-                        </td>
-                        <td class="p-4 align-top">
-                            ${kontenPreview}
-                        </td>
-                        <td class="p-4 text-center align-top space-x-2">
-                            <button onclick="openEditModal(${originalIndex})"
-                                class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-yellow-200 text-yellow-600 hover:bg-yellow-50"
-                                title="Edit">✏️</button>
-                            <button onclick="openDeleteModal(${originalIndex})"
-                                class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-red-200 text-red-600 hover:bg-red-50"
-                                title="Hapus">🗑</button>
-                        </td>
-                    </tr>
-                `;
+            <tr class="border-b hover:bg-gray-50">
+                <td class="p-4 font-semibold text-gray-800 align-top">
+                    ${m.judul}
+                </td>
+                <td class="p-4 text-sm text-gray-700 align-top">
+                    ${courseLabel(m)}
+                </td>
+                <td class="p-4 text-center align-top text-xs font-semibold">
+                    Level ${m.level || 1}
+                </td>
+                <td class="p-4 text-center align-top">
+                    ${tipeBadge}
+                </td>
+                <td class="p-4 align-top">
+                    ${kontenPreview}
+                </td>
+                <td class="p-4 text-center align-top space-x-2">
+                    <button onclick="openEditModal(${originalIndex})"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-yellow-200 text-yellow-600 hover:bg-yellow-50"
+                        title="Edit">✏️</button>
+                    <button onclick="openDeleteModal(${originalIndex})"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-red-200 text-red-600 hover:bg-red-50"
+                        title="Hapus">🗑</button>
+                </td>
+            </tr>
+        `;
             });
         }
 
         // ===========================
-        //  MODAL TAMBAH
+        // Modal Tambah
         // ===========================
         function openAddModal() {
-            if (!courses.length) {
-                alert('Belum ada kursus. Silakan buat kursus (bahasa + paket) dulu.');
+            if (!pakets.length || !bahasas.length) {
+                alert('Paket / bahasa belum dimuat.');
                 return;
             }
 
@@ -344,7 +392,8 @@
             document.getElementById('addTeksTeori').value = '';
             document.getElementById('addLevel').value = 1;
 
-            fillCourseSelect(document.getElementById('addCourse'));
+            fillPaketSelect(document.getElementById('addPaket'));
+            fillBahasaSelect(document.getElementById('addBahasa'));
 
             const m = document.getElementById('addModal');
             m.classList.remove('hidden');
@@ -356,14 +405,15 @@
         }
 
         async function saveAdd() {
-            const id_course = document.getElementById('addCourse').value;
+            const id_paket = document.getElementById('addPaket').value;
+            const id_bahasa = document.getElementById('addBahasa').value;
             let level = parseInt(document.getElementById('addLevel').value || '1', 10);
             const judul = document.getElementById('addJudul').value.trim();
             const url = document.getElementById('addUrlVideo').value.trim();
             const teks = document.getElementById('addTeksTeori').value.trim();
 
-            if (!id_course || !judul) {
-                alert('Kursus, level, dan judul wajib diisi');
+            if (!id_paket || !id_bahasa || !judul) {
+                alert('Paket, bahasa, level, dan judul wajib diisi');
                 return;
             }
 
@@ -373,40 +423,22 @@
                 return;
             }
 
-            const hasVideo = !!url;
-            const hasTeori = !!teks;
-
-            if (!hasVideo && !hasTeori) {
+            if (!url && !teks) {
                 alert('Isi minimal URL video atau teks teori.');
                 return;
             }
 
-            const jobs = [];
-
-            if (hasVideo) {
-                jobs.push(api.post('/admin/materi', {
-                    id_course: id_course,
-                    level: level,
-                    judul: judul,
-                    tipe: 'video',
-                    url_video: url,
-                    teks_teori: null,
-                }));
-            }
-
-            if (hasTeori) {
-                jobs.push(api.post('/admin/materi', {
-                    id_course: id_course,
-                    level: level,
-                    judul: judul,
-                    tipe: 'teori',
-                    url_video: null,
-                    teks_teori: teks,
-                }));
-            }
+            const payload = {
+                id_paket: id_paket,
+                id_bahasa: id_bahasa,
+                level: level,
+                judul: judul,
+                url_video: url || null,
+                teks_teori: teks || null,
+            };
 
             try {
-                await Promise.all(jobs);
+                await api.post('/admin/materi', payload);
                 closeAddModal();
                 await loadMateri();
             } catch (e) {
@@ -416,7 +448,7 @@
         }
 
         // ===========================
-        //  MODAL EDIT
+        // Modal Edit
         // ===========================
         function openEditModal(index) {
             const m = materis[index];
@@ -424,15 +456,16 @@
 
             document.getElementById('editIndex').value = index;
 
-            fillCourseSelect(document.getElementById('editCourse'), m.id_course);
+            const paketId = m.course && m.course.paket ? m.course.paket.id : null;
+            const bahasaId = m.course && m.course.bahasa ? m.course.bahasa.id : null;
 
-            document.getElementById('editLevel').value = m.level ?? 1;
+            fillPaketSelect(document.getElementById('editPaket'), paketId);
+            fillBahasaSelect(document.getElementById('editBahasa'), bahasaId);
+
+            document.getElementById('editLevel').value = m.level || 1;
             document.getElementById('editJudul').value = m.judul;
-            document.getElementById('editTipe').value = m.tipe;
             document.getElementById('editUrlVideo').value = m.url_video || '';
             document.getElementById('editTeksTeori').value = m.teks_teori || '';
-
-            toggleEditTipe();
 
             const modal = document.getElementById('editModal');
             modal.classList.remove('hidden');
@@ -443,26 +476,20 @@
             document.getElementById('editModal').classList.add('hidden');
         }
 
-        function toggleEditTipe() {
-            const tipe = document.getElementById('editTipe').value;
-            document.getElementById('editVideoGroup').classList.toggle('hidden', tipe !== 'video');
-            document.getElementById('editTeoriGroup').classList.toggle('hidden', tipe !== 'teori');
-        }
-
         async function saveEdit() {
             const index = document.getElementById('editIndex').value;
             const m = materis[index];
             if (!m) return;
 
-            const id_course = document.getElementById('editCourse').value;
+            const id_paket = document.getElementById('editPaket').value;
+            const id_bahasa = document.getElementById('editBahasa').value;
             let level = parseInt(document.getElementById('editLevel').value || '1', 10);
             const judul = document.getElementById('editJudul').value.trim();
-            const tipe = document.getElementById('editTipe').value;
             const url = document.getElementById('editUrlVideo').value.trim();
             const teks = document.getElementById('editTeksTeori').value.trim();
 
-            if (!id_course || !judul || !tipe) {
-                alert('Kursus, level, judul, dan tipe wajib diisi');
+            if (!id_paket || !id_bahasa || !judul) {
+                alert('Paket, bahasa, level, dan judul wajib diisi');
                 return;
             }
 
@@ -472,22 +499,18 @@
                 return;
             }
 
-            if (tipe === 'video' && !url) {
-                alert('URL video wajib diisi untuk tipe video');
-                return;
-            }
-            if (tipe === 'teori' && !teks) {
-                alert('Teks teori wajib diisi untuk tipe teori');
+            if (!url && !teks) {
+                alert('Isi minimal URL video atau teks teori.');
                 return;
             }
 
             const payload = {
-                id_course: id_course,
+                id_paket: id_paket,
+                id_bahasa: id_bahasa,
                 level: level,
                 judul: judul,
-                tipe: tipe,
-                url_video: tipe === 'video' ? url : null,
-                teks_teori: tipe === 'teori' ? teks : null,
+                url_video: url || null,
+                teks_teori: teks || null,
             };
 
             try {
@@ -501,7 +524,7 @@
         }
 
         // ===========================
-        //  MODAL DELETE
+        // Modal Delete
         // ===========================
         function openDeleteModal(index) {
             document.getElementById('deleteIndex').value = index;
@@ -537,10 +560,11 @@
         }
 
         // ===========================
-        //  INIT
+        // Init
         // ===========================
         document.addEventListener('DOMContentLoaded', async () => {
-            await loadCourses();
+            await loadPakets();
+            await loadBahasas();
             await loadMateri();
         });
     </script>
