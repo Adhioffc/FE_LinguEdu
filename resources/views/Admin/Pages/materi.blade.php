@@ -59,10 +59,10 @@
             {{-- LEVEL --}}
             <div class="mb-4">
                 <label class="font-semibold text-sm">Level</label>
-                <input id="addLevel" type="number" min="1" class="w-full border p-2 rounded-lg mt-1 text-sm"
-                    placeholder="Contoh: 1" value="1">
+                <input id="addLevel" type="number" min="1" max="3"
+                    class="w-full border p-2 rounded-lg mt-1 text-sm" placeholder="Contoh: 1" value="1">
                 <p class="text-xs text-gray-500 mt-1">
-                    Level 1 = materi awal, 2 = materi berikutnya, dan seterusnya.
+                    Level 1 = materi awal, 2 = materi berikutnya, 3 = materi lanjutan.
                 </p>
             </div>
 
@@ -73,32 +73,24 @@
                     placeholder="Contoh: Pengantar Grammar Dasar">
             </div>
 
-            {{-- TIPE --}}
+            {{-- URL VIDEO (opsional) --}}
             <div class="mb-4">
-                <label class="font-semibold text-sm">Tipe Materi</label>
-                <select id="addTipe" class="w-full border p-2 rounded-lg mt-1 text-sm bg-gray-50"
-                    onchange="toggleAddTipe()">
-                    <option value="">-- Pilih Tipe --</option>
-                    <option value="video">Video</option>
-                    <option value="teori">Teori (Teks)</option>
-                </select>
-            </div>
-
-            {{-- VIDEO GROUP --}}
-            <div class="mb-4 hidden" id="addVideoGroup">
-                <label class="font-semibold text-sm">URL Video</label>
+                <label class="font-semibold text-sm">URL Video (opsional)</label>
                 <input id="addUrlVideo" type="text" class="w-full border p-2 rounded-lg mt-1 text-sm"
                     placeholder="https://... (YouTube / link video)">
                 <p class="text-xs text-gray-500 mt-1">
-                    Masukkan URL video (YouTube, Vimeo, atau link video lain).
+                    Isi jika materi ini punya video. Kalau kosong, tidak akan dibuat materi video.
                 </p>
             </div>
 
-            {{-- TEORI GROUP --}}
-            <div class="mb-4 hidden" id="addTeoriGroup">
-                <label class="font-semibold text-sm">Teks Teori</label>
+            {{-- TEKS TEORI (opsional) --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Teks Teori (opsional)</label>
                 <textarea id="addTeksTeori" rows="5" class="w-full border p-2 rounded-lg mt-1 text-sm"
                     placeholder="Isi materi teori di sini..."></textarea>
+                <p class="text-xs text-gray-500 mt-1">
+                    Isi jika materi ini punya teks teori. Kalau kosong, tidak akan dibuat materi teori.
+                </p>
             </div>
 
             <div class="flex justify-end mt-6">
@@ -133,7 +125,8 @@
             {{-- LEVEL --}}
             <div class="mb-4">
                 <label class="font-semibold text-sm">Level</label>
-                <input id="editLevel" type="number" min="1" class="w-full border p-2 rounded-lg mt-1 text-sm">
+                <input id="editLevel" type="number" min="1" max="3"
+                    class="w-full border p-2 rounded-lg mt-1 text-sm">
             </div>
 
             {{-- JUDUL --}}
@@ -142,7 +135,7 @@
                 <input id="editJudul" type="text" class="w-full border p-2 rounded-lg mt-1 text-sm">
             </div>
 
-            {{-- TIPE --}}
+            {{-- TIPE (karena satu record = satu tipe) --}}
             <div class="mb-4">
                 <label class="font-semibold text-sm">Tipe Materi</label>
                 <select id="editTipe" class="w-full border p-2 rounded-lg mt-1 text-sm bg-gray-50"
@@ -280,7 +273,6 @@
                 return;
             }
 
-            // Optional: sort by kursus, lalu level
             const sorted = [...materis].sort((a, b) => {
                 if (a.id_course === b.id_course) {
                     return (a.level ?? 1) - (b.level ?? 1);
@@ -288,7 +280,7 @@
                 return a.id_course - b.id_course;
             });
 
-            sorted.forEach((m, i) => {
+            sorted.forEach((m) => {
                 const tipeBadge = m.tipe === 'video' ?
                     `<span class="inline-block px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700 font-semibold">Video</span>` :
                     `<span class="inline-block px-2 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700 font-semibold">Teori</span>`;
@@ -305,7 +297,7 @@
                     </p>`;
                 }
 
-                // Cari index asli di array materis (karena kita pakai sorted)
+                // cari index asli di array materis
                 const originalIndex = materis.findIndex(x => x.id_materi === m.id_materi);
 
                 tbody.innerHTML += `
@@ -348,15 +340,11 @@
             }
 
             document.getElementById('addJudul').value = '';
-            document.getElementById('addTipe').value = '';
             document.getElementById('addUrlVideo').value = '';
             document.getElementById('addTeksTeori').value = '';
             document.getElementById('addLevel').value = 1;
 
             fillCourseSelect(document.getElementById('addCourse'));
-
-            document.getElementById('addVideoGroup').classList.add('hidden');
-            document.getElementById('addTeoriGroup').classList.add('hidden');
 
             const m = document.getElementById('addModal');
             m.classList.remove('hidden');
@@ -367,45 +355,58 @@
             document.getElementById('addModal').classList.add('hidden');
         }
 
-        function toggleAddTipe() {
-            const tipe = document.getElementById('addTipe').value;
-            document.getElementById('addVideoGroup').classList.toggle('hidden', tipe !== 'video');
-            document.getElementById('addTeoriGroup').classList.toggle('hidden', tipe !== 'teori');
-        }
-
         async function saveAdd() {
             const id_course = document.getElementById('addCourse').value;
-            const level = parseInt(document.getElementById('addLevel').value || '1', 10);
+            let level = parseInt(document.getElementById('addLevel').value || '1', 10);
             const judul = document.getElementById('addJudul').value.trim();
-            const tipe = document.getElementById('addTipe').value;
             const url = document.getElementById('addUrlVideo').value.trim();
             const teks = document.getElementById('addTeksTeori').value.trim();
 
-            if (!id_course || !judul || !tipe) {
-                alert('Kursus, level, judul, dan tipe wajib diisi');
+            if (!id_course || !judul) {
+                alert('Kursus, level, dan judul wajib diisi');
                 return;
             }
 
-            if (tipe === 'video' && !url) {
-                alert('URL video wajib diisi untuk tipe video');
-                return;
-            }
-            if (tipe === 'teori' && !teks) {
-                alert('Teks teori wajib diisi untuk tipe teori');
+            if (Number.isNaN(level)) level = 1;
+            if (level < 1 || level > 3) {
+                alert('Level harus antara 1 sampai 3');
                 return;
             }
 
-            const payload = {
-                id_course: id_course,
-                level: level,
-                judul: judul,
-                tipe: tipe,
-                url_video: tipe === 'video' ? url : null,
-                teks_teori: tipe === 'teori' ? teks : null,
-            };
+            const hasVideo = !!url;
+            const hasTeori = !!teks;
+
+            if (!hasVideo && !hasTeori) {
+                alert('Isi minimal URL video atau teks teori.');
+                return;
+            }
+
+            const jobs = [];
+
+            if (hasVideo) {
+                jobs.push(api.post('/admin/materi', {
+                    id_course: id_course,
+                    level: level,
+                    judul: judul,
+                    tipe: 'video',
+                    url_video: url,
+                    teks_teori: null,
+                }));
+            }
+
+            if (hasTeori) {
+                jobs.push(api.post('/admin/materi', {
+                    id_course: id_course,
+                    level: level,
+                    judul: judul,
+                    tipe: 'teori',
+                    url_video: null,
+                    teks_teori: teks,
+                }));
+            }
 
             try {
-                await api.post('/admin/materi', payload);
+                await Promise.all(jobs);
                 closeAddModal();
                 await loadMateri();
             } catch (e) {
@@ -454,7 +455,7 @@
             if (!m) return;
 
             const id_course = document.getElementById('editCourse').value;
-            const level = parseInt(document.getElementById('editLevel').value || '1', 10);
+            let level = parseInt(document.getElementById('editLevel').value || '1', 10);
             const judul = document.getElementById('editJudul').value.trim();
             const tipe = document.getElementById('editTipe').value;
             const url = document.getElementById('editUrlVideo').value.trim();
@@ -462,6 +463,12 @@
 
             if (!id_course || !judul || !tipe) {
                 alert('Kursus, level, judul, dan tipe wajib diisi');
+                return;
+            }
+
+            if (Number.isNaN(level)) level = 1;
+            if (level < 1 || level > 3) {
+                alert('Level harus antara 1 sampai 3');
                 return;
             }
 
