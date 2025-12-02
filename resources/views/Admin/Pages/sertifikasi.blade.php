@@ -1,323 +1,624 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen Sertifikasi</title>
+@extends('layouts.admin')
 
-    <script src="https://cdn.tailwindcss.com"></script>
+@section('title', 'Manajemen Uji Sertifikasi')
 
-    <!-- html2canvas + jsPDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+@section('content')
+    <div class="container py-5">
 
-    <style>
-        #preview-cert {
-            width: 700px;
-            height: 500px;
-            background-size: cover;
-            background-position: center;
-        }
-    </style>
-</head>
+        {{-- NAVIGASI --}}
+        <a href="/admin/dashboard" class="text-primary d-block mb-3">
+            ← Kembali ke Dashboard
+        </a>
 
-<body class="bg-gray-100 p-6">
+        <h2 class="fw-bold mb-2">🏅 Manajemen Uji Sertifikasi</h2>
+        <p class="text-muted mb-4">
+            Kelola soal uji sertifikasi berdasarkan Paket, Bahasa, Level, dan Materi.
+        </p>
 
-    <!-- NAVIGATION -->
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">🏅 Manajemen Sertifikasi</h1>
-        <a href="/dashboard" class="px-4 py-2 bg-gray-700 hover:bg-gray-900 text-white rounded">← Kembali ke Dashboard</a>
-    </div>
+        {{-- FILTER ATAS: PAKET / BAHASA / LEVEL / MATERI --}}
+        <div class="card mb-4">
+            <div class="card-body">
 
-    <!-- TAB SELECTION -->
-    <div class="flex gap-3 mb-6">
-        <button onclick="showTab('template')" id="tab-btn-template" class="bg-blue-600 text-white px-4 py-2 rounded">
-            Template Sertifikat
-        </button>
-        <button onclick="showTab('peserta')" id="tab-btn-peserta" class="bg-gray-300 px-4 py-2 rounded">
-            Daftar Peserta
-        </button>
-    </div>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="fw-semibold">Paket</label>
+                        <select id="selectPaket" class="form-select">
+                            <option value="">-- Pilih Paket --</option>
+                        </select>
+                    </div>
 
-    <!-- ============================= -->
-    <!-- 1) TEMPLATE SERTIFIKAT -->
-    <!-- ============================= -->
-    <div id="tab-template" class="bg-white shadow p-6 rounded-lg tab-page">
+                    <div class="col-md-3">
+                        <label class="fw-semibold">Bahasa</label>
+                        <select id="selectBahasa" class="form-select">
+                            <option value="">-- Pilih Bahasa --</option>
+                        </select>
+                    </div>
 
-        <h2 class="text-xl font-semibold mb-4">📄 Template Sertifikat</h2>
+                    <div class="col-md-2">
+                        <label class="fw-semibold">Level</label>
+                        <select id="selectLevel" class="form-select">
+                            <option value="">Semua</option>
+                            <option value="1">Level 1</option>
+                            <option value="2">Level 2</option>
+                            <option value="3">Level 3</option>
+                        </select>
+                    </div>
 
-        <!-- FORM CREATE TEMPLATE -->
-        <div class="mb-6">
-            <label class="font-semibold">Judul Sertifikat</label>
-            <input id="temp-title" type="text" class="w-full border p-2 rounded mb-2">
+                    <div class="col-md-4">
+                        <label class="fw-semibold">Materi</label>
+                        <select id="selectMateri" class="form-select">
+                            <option value="">-- Pilih Paket + Bahasa (+ Level) dulu --</option>
+                        </select>
+                    </div>
+                </div>
 
-            <label class="font-semibold">Deskripsi</label>
-            <textarea id="temp-desc" class="w-full border p-2 rounded mb-2"></textarea>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        Sistem akan mencari materi berdasarkan kombinasi Paket + Bahasa + Level.
+                        Uji sertifikasi dibuat per materi.
+                    </small>
+                </div>
+            </div>
+        </div>
 
-            <label class="font-semibold">Nama Penandatangan</label>
-            <input id="temp-sign" type="text" class="w-full border p-2 rounded mb-2">
-
-            <label class="font-semibold">Pilih Paket</label>
-            <select id="temp-paket" class="w-full border p-2 rounded mb-2">
-                <option>Inggris</option>
-                <option>Jepang</option>
-                <option>Korea</option>
-            </select>
-
-            <label class="font-semibold">Background Sertifikat (URL)</label>
-            <input id="temp-bg" type="text" class="w-full border p-2 rounded mb-2" placeholder="https://...">
-
-            <button onclick="createTemplate()" class="bg-blue-600 text-white px-4 py-2 rounded mt-2">
-                Simpan Template
+        {{-- INFO UJI SERTIF & TOMBOL TAMBAH SOAL --}}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="mb-0 fw-semibold">Daftar Soal Uji Sertifikasi</h5>
+                <small id="infoUjiText" class="text-muted d-block">
+                    Pilih Paket, Bahasa, Level, dan Materi terlebih dahulu.
+                </small>
+            </div>
+            <button class="btn btn-primary" id="btnAddSoal" disabled>
+                + Tambah Soal Sertifikasi
             </button>
         </div>
 
-        <!-- TABLE TEMPLATE -->
-        <h3 class="font-semibold text-lg mt-6 mb-3">Daftar Template</h3>
-        <table class="w-full border text-sm">
-            <thead class="bg-gray-200">
-                <tr>
-                    <th class="border p-2">Judul</th>
-                    <th class="border p-2">Paket</th>
-                    <th class="border p-2">Aksi</th>
-                </tr>
-            </thead>
-            <tbody id="template-table"></tbody>
-        </table>
+        {{-- TABEL SOAL --}}
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle bg-white">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 5%">#</th>
+                        <th style="width: 30%">Pertanyaan</th>
+                        <th style="width: 45%">Pilihan Jawaban</th>
+                        <th style="width: 10%">Jawaban Benar</th>
+                        <th style="width: 10%">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="soalTable">
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            Pilih Paket, Bahasa, Level, dan Materi terlebih dahulu.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <!-- ============================= -->
-    <!-- 2) PESERTA & PREVIEW -->
-    <!-- ============================= -->
-    <div id="tab-peserta" class="bg-white shadow p-6 rounded-lg hidden tab-page">
+    {{-- MODAL TAMBAH SOAL --}}
+    <div class="modal fade" id="modalAdd" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tambah Soal Sertifikasi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
 
-        <h2 class="text-xl font-semibold mb-4">👤 Daftar Peserta & Preview Sertifikat</h2>
+                    <div class="mb-3">
+                        <label class="fw-semibold">Pertanyaan</label>
+                        <textarea id="addPertanyaan" class="form-control" rows="3" placeholder="Tulis pertanyaan di sini..."></textarea>
+                    </div>
 
-        <!-- INPUT PESERTA -->
-        <div class="mb-6">
-            <label class="font-semibold">Nama Peserta</label>
-            <input id="peserta-name" type="text" class="w-full border p-2 rounded mb-2">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="fw-semibold">Pilihan A</label>
+                            <input type="text" id="addA" class="form-control" placeholder="Teks jawaban A">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-semibold">Pilihan B</label>
+                            <input type="text" id="addB" class="form-control" placeholder="Teks jawaban B">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-semibold">Pilihan C</label>
+                            <input type="text" id="addC" class="form-control" placeholder="Teks jawaban C">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-semibold">Pilihan D</label>
+                            <input type="text" id="addD" class="form-control" placeholder="Teks jawaban D">
+                        </div>
+                    </div>
 
-            <label class="font-semibold">Pilih Template</label>
-            <select id="peserta-template" class="w-full border p-2 rounded mb-2"></select>
+                    <div class="mt-3">
+                        <label class="fw-semibold">Jawaban Benar</label>
+                        <select id="addCorrect" class="form-select w-auto">
+                            <option value="A">Pilihan A</option>
+                            <option value="B">Pilihan B</option>
+                            <option value="C">Pilihan C</option>
+                            <option value="D">Pilihan D</option>
+                        </select>
+                    </div>
 
-            <button onclick="addPeserta()" class="bg-green-600 text-white px-4 py-2 rounded mt-2">
-                Tambahkan Peserta
-            </button>
+                    <div class="mt-3">
+                        <label class="fw-semibold">KKM (Passing Score) Uji Sertifikasi ini (opsional)</label>
+                        <input type="number" id="addKKM" class="form-control w-auto" min="0" max="100"
+                            value="70">
+                        <small class="text-muted">
+                            Hanya dipakai saat membuat uji sertifikasi baru untuk materi ini. Kalau uji sudah ada, nilai KKM
+                            tidak diubah di sini.
+                        </small>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button class="btn btn-primary" id="btnSaveAdd">Simpan</button>
+                </div>
+            </div>
         </div>
-
-        <!-- TABLE PESERTA -->
-        <h3 class="font-semibold text-lg mt-6 mb-3">Daftar Peserta</h3>
-        <table class="w-full border text-sm">
-            <thead class="bg-gray-200">
-                <tr>
-                    <th class="border p-2">Nama</th>
-                    <th class="border p-2">Template</th>
-                    <th class="border p-2 text-center">Aksi</th>
-                </tr>
-            </thead>
-            <tbody id="peserta-table"></tbody>
-        </table>
-
-        <!-- PREVIEW -->
-        <h3 class="font-semibold text-lg mt-8 mb-2">🔍 Preview Sertifikat</h3>
-        <div id="preview-cert" class="border relative rounded-lg shadow bg-white">
-            <div id="prev-title" class="absolute top-10 w-full text-center text-2xl font-bold"></div>
-            <div id="prev-name" class="absolute top-32 w-full text-center text-xl font-semibold"></div>
-            <div id="prev-desc" class="absolute top-48 w-full text-center px-6"></div>
-            <div id="prev-sign" class="absolute bottom-10 w-full text-center font-medium"></div>
-            <div id="prev-date" class="absolute bottom-4 w-full text-center text-sm text-gray-600"></div>
-        </div>
-
-        <!-- DOWNLOAD BUTTONS -->
-        <div class="flex gap-3 mt-4">
-            <button onclick="downloadPNG()" class="bg-blue-600 text-white px-4 py-2 rounded">Download PNG</button>
-            <button onclick="downloadPDF()" class="bg-red-600 text-white px-4 py-2 rounded">Download PDF</button>
-        </div>
-
     </div>
 
-    <!-- ====================================================== -->
-    <!-- JAVASCRIPT LOGIC -->
-    <!-- ====================================================== -->
+    {{-- MODAL EDIT SOAL --}}
+    <div class="modal fade" id="modalEdit" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Soal Sertifikasi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" id="editIndex">
+
+                    <div class="mb-3">
+                        <label class="fw-semibold">Pertanyaan</label>
+                        <textarea id="editPertanyaan" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="fw-semibold">Pilihan A</label>
+                            <input type="text" id="editA" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-semibold">Pilihan B</label>
+                            <input type="text" id="editB" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-semibold">Pilihan C</label>
+                            <input type="text" id="editC" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-semibold">Pilihan D</label>
+                            <input type="text" id="editD" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="fw-semibold">Jawaban Benar</label>
+                        <select id="editCorrect" class="form-select w-auto">
+                            <option value="A">Pilihan A</option>
+                            <option value="B">Pilihan B</option>
+                            <option value="C">Pilihan C</option>
+                            <option value="D">Pilihan D</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button class="btn btn-primary" id="btnSaveEdit">Simpan Perubahan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        let templates = JSON.parse(localStorage.getItem("cert_templates") || "[]");
-        let peserta = JSON.parse(localStorage.getItem("cert_peserta") || "[]");
+        const api = axios.create({
+            baseURL: 'http://127.0.0.1:8000/api',
+            headers: {
+                Accept: 'application/json'
+            },
+        });
 
-        function save() {
-            localStorage.setItem("cert_templates", JSON.stringify(templates));
-            localStorage.setItem("cert_peserta", JSON.stringify(peserta));
+        let pakets = [];
+        let bahasas = [];
+        let materis = [];
+
+        let currentTes = null; // { kode_tes, id_materi, id_course, skor (KKM?), ... }
+        let currentSoal = []; // array soal sertifikasi untuk currentTes
+
+        const selectPaket = document.getElementById('selectPaket');
+        const selectBahasa = document.getElementById('selectBahasa');
+        const selectLevel = document.getElementById('selectLevel');
+        const selectMateri = document.getElementById('selectMateri');
+        const soalTable = document.getElementById('soalTable');
+        const btnAddSoal = document.getElementById('btnAddSoal');
+        const infoUjiText = document.getElementById('infoUjiText');
+
+        /* =============================
+           LOAD MASTER DATA
+        ============================== */
+
+        async function loadPakets() {
+            try {
+                const res = await api.get('/paket'); // dari AuthController::paket (public)
+                pakets = Array.isArray(res.data.data) ? res.data.data : res.data;
+                selectPaket.innerHTML = '<option value="">-- Pilih Paket --</option>';
+                pakets.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.nama_paket || ('Paket #' + p.id);
+                    selectPaket.appendChild(opt);
+                });
+            } catch (e) {
+                console.error(e);
+                alert('Gagal memuat paket');
+            }
         }
 
-        // SHOW TABS
-        function showTab(tab) {
-            document.querySelectorAll(".tab-page").forEach(t => t.classList.add("hidden"));
-            document.getElementById("tab-" + tab).classList.remove("hidden");
-
-            document.querySelectorAll("[id^='tab-btn']").forEach(b => b.classList.remove("bg-blue-600","text-white"));
-            document.getElementById("tab-btn-" + tab).classList.add("bg-blue-600","text-white");
-
-            updateUI();
+        async function loadBahasas() {
+            try {
+                const res = await api.get('/bahasa'); // dari AuthController::bahasa
+                bahasas = Array.isArray(res.data.data) ? res.data.data : res.data;
+                selectBahasa.innerHTML = '<option value="">-- Pilih Bahasa --</option>';
+                bahasas.forEach(b => {
+                    const opt = document.createElement('option');
+                    opt.value = b.id;
+                    opt.textContent = b.nama_bahasa || ('Bahasa #' + b.id);
+                    selectBahasa.appendChild(opt);
+                });
+            } catch (e) {
+                console.error(e);
+                alert('Gagal memuat bahasa');
+            }
         }
 
-        /* ============================================================
-           TEMPLATE CRUD
-        ============================================================ */
+        async function loadMateris() {
+            const idPaket = selectPaket.value;
+            const idBahasa = selectBahasa.value;
+            const level = selectLevel.value;
 
-        function createTemplate() {
-            let obj = {
-                id: Date.now(),
-                title: document.getElementById("temp-title").value,
-                desc: document.getElementById("temp-desc").value,
-                sign: document.getElementById("temp-sign").value,
-                paket: document.getElementById("temp-paket").value,
-                bg: document.getElementById("temp-bg").value
-            };
+            selectMateri.innerHTML = '<option value="">-- Pilih Paket + Bahasa (+ Level) dulu --</option>';
+            currentTes = null;
+            currentSoal = [];
+            renderSoal();
 
-            templates.push(obj);
-            save();
-            updateUI();
+            infoUjiText.textContent = 'Pilih Paket, Bahasa, Level, dan Materi terlebih dahulu.';
+            btnAddSoal.disabled = true;
 
-            alert("Template ditambahkan!");
+            if (!idPaket || !idBahasa) {
+                return;
+            }
+
+            try {
+                const params = {
+                    paket: idPaket,
+                    bahasa: idBahasa
+                };
+                if (level) params.level = level;
+
+                const res = await api.get('/admin/materi/filter', {
+                    params
+                });
+                materis = Array.isArray(res.data.data) ? res.data.data : res.data;
+
+                if (!materis.length) {
+                    selectMateri.innerHTML = '<option value="">-- Tidak ada materi untuk filter ini --</option>';
+                    return;
+                }
+
+                selectMateri.innerHTML = '<option value="">-- Pilih Materi --</option>';
+                materis.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.id_materi;
+                    opt.textContent = `Level ${m.level} - ${m.judul}`;
+                    selectMateri.appendChild(opt);
+                });
+            } catch (e) {
+                console.error(e);
+                alert('Gagal memuat materi');
+            }
         }
 
-        function deleteTemplate(id) {
-            templates = templates.filter(t => t.id !== id);
-            save();
-            updateUI();
+        /* =============================
+           LOAD UJI SERTIFIKASI + SOAL
+        ============================== */
+
+        async function loadTesForMateri() {
+            const idMateri = selectMateri.value;
+
+            currentTes = null;
+            currentSoal = [];
+            renderSoal();
+
+            btnAddSoal.disabled = !idMateri;
+            infoUjiText.textContent = 'Pilih Paket, Bahasa, Level, dan Materi terlebih dahulu.';
+
+            if (!idMateri) {
+                soalTable.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            Pilih materi terlebih dahulu.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            try {
+                // Ambil semua uji sertifikasi, lalu filter berdasarkan id_materi
+                const res = await api.get('/admin/sertifikasi/tes');
+                const list = Array.isArray(res.data.data) ? res.data.data : res.data;
+
+                const found = list.find(t => String(t.id_materi) === String(idMateri));
+                currentTes = found || null;
+
+                if (!currentTes) {
+                    infoUjiText.textContent =
+                        'Belum ada uji sertifikasi untuk materi ini. Tambah soal pertama akan otomatis membuat uji sertifikasi.';
+                    soalTable.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">
+                                Belum ada soal untuk materi ini.
+                            </td>
+                        </tr>`;
+                    return;
+                }
+
+                infoUjiText.textContent =
+                    `Uji Sertifikasi terdaftar (Kode Tes: ${currentTes.kode_tes}). Total soal: ${currentTes.jumlah_soal ?? (currentTes.soal_sertifikasi?.length || '-')}.`;
+
+                // Ambil soal untuk kode_tes ini
+                await loadSoalForTes(currentTes.kode_tes);
+
+            } catch (e) {
+                console.error(e);
+                alert('Gagal memuat uji sertifikasi');
+            }
         }
 
-        /* ============================================================
-           PESERTA CRUD
-        ============================================================ */
-
-        function addPeserta() {
-            peserta.push({
-                id: Date.now(),
-                name: document.getElementById("peserta-name").value,
-                templateId: Number(document.getElementById("peserta-template").value)
-            });
-
-            save();
-            updateUI();
-
-            alert("Peserta ditambahkan!");
-        }
-
-        function deletePeserta(id) {
-            peserta = peserta.filter(p => p.id !== id);
-            save();
-            updateUI();
-        }
-
-        /* ============================================================
-           PREVIEW UPDATE
-        ============================================================ */
-
-        function preview(id) {
-            let p = peserta.find(x => x.id === id);
-            if (!p) return;
-
-            let t = templates.find(x => x.id === p.templateId);
-            if (!t) return;
-
-            // SET BACKGROUND
-            document.getElementById("preview-cert").style.backgroundImage = `url('${t.bg}')`;
-
-            // SET TEXT
-            document.getElementById("prev-title").innerText = t.title;
-            document.getElementById("prev-name").innerText = p.name;
-            document.getElementById("prev-desc").innerText = t.desc;
-            document.getElementById("prev-sign").innerText = t.sign;
-
-            // AUTO DATE
-            let d = new Date().toLocaleDateString("id-ID", {
-                day: "numeric",
-                month: "long",
-                year: "numeric"
-            });
-            document.getElementById("prev-date").innerText = "Diterbitkan pada: " + d;
-        }
-
-        /* ============================================================
-           DOWNLOAD PNG
-        ============================================================ */
-
-        function downloadPNG() {
-            let cert = document.getElementById("preview-cert");
-            html2canvas(cert).then(canvas => {
-                let link = document.createElement("a");
-                link.download = "sertifikat.png";
-                link.href = canvas.toDataURL();
-                link.click();
-            });
-        }
-
-        /* ============================================================
-           DOWNLOAD PDF
-        ============================================================ */
-
-        async function downloadPDF() {
-            const { jsPDF } = window.jspdf;
-
-            let cert = document.getElementById("preview-cert");
-            html2canvas(cert).then(canvas => {
-                let img = canvas.toDataURL("image/png");
-
-                let pdf = new jsPDF("landscape", "pt", [700, 500]);
-                pdf.addImage(img, "PNG", 0, 0, 700, 500);
-                pdf.save("sertifikat.pdf");
-            });
-        }
-
-        /* ============================================================
-           UPDATE UI
-        ============================================================ */
-
-        function updateUI() {
-
-            // UPDATE TEMPLATE TABLE
-            let t = "";
-            templates.forEach(x => {
-                t += `
+        async function loadSoalForTes(kodeTes) {
+            currentSoal = [];
+            soalTable.innerHTML = `
                 <tr>
-                    <td class="border p-2">${x.title}</td>
-                    <td class="border p-2">${x.paket}</td>
-                    <td class="border p-2 text-center">
-                        <button onclick="deleteTemplate(${x.id})" class="bg-red-600 text-white px-3 py-1 rounded">Hapus</button>
+                    <td colspan="5" class="text-center text-muted">
+                        Memuat soal...
                     </td>
-                </tr>
-                `;
-            });
-            document.getElementById("template-table").innerHTML = t;
+                </tr>`;
 
-            // UPDATE SELECT TEMPLATE DROPDOWN
-            let opt = "";
-            templates.forEach(x => {
-                opt += `<option value="${x.id}">${x.title} (${x.paket})</option>`;
-            });
-            document.getElementById("peserta-template").innerHTML = opt;
-
-            // UPDATE PESERTA TABLE
-            let p = "";
-            peserta.forEach(x => {
-                let t2 = templates.find(a => a.id === x.templateId);
-                p += `
-                <tr>
-                    <td class="border p-2">${x.name}</td>
-                    <td class="border p-2">${t2 ? t2.title : "-"}</td>
-                    <td class="border p-2 text-center">
-                        <button onclick="preview(${x.id})" class="bg-blue-600 text-white px-3 py-1 rounded">Preview</button>
-                        <button onclick="deletePeserta(${x.id})" class="bg-red-600 text-white px-3 py-1 rounded">Hapus</button>
-                    </td>
-                </tr>
-                `;
-            });
-            document.getElementById("peserta-table").innerHTML = p;
+            try {
+                const res = await api.get(`/admin/sertifikasi/soal/${kodeTes}`);
+                currentSoal = Array.isArray(res.data.data) ? res.data.data : res.data;
+                renderSoal();
+            } catch (e) {
+                console.error(e);
+                alert('Gagal memuat soal sertifikasi');
+            }
         }
 
-        updateUI();
+        /* =============================
+           RENDER TABEL SOAL
+        ============================== */
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, function(m) {
+                return ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;',
+                })[m];
+            });
+        }
+
+        function renderSoal() {
+            soalTable.innerHTML = '';
+
+            if (!selectMateri.value) {
+                soalTable.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            Pilih materi terlebih dahulu.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            if (!currentSoal.length) {
+                soalTable.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            Belum ada soal untuk uji sertifikasi ini.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            currentSoal.forEach((s, index) => {
+                soalTable.innerHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${escapeHtml(s.pertanyaan)}</td>
+                    <td>
+                        <div>A. ${escapeHtml(s.opsi_a || '')}</div>
+                        <div>B. ${escapeHtml(s.opsi_b || '')}</div>
+                        <div>C. ${escapeHtml(s.opsi_c || '')}</div>
+                        <div>D. ${escapeHtml(s.opsi_d || '')}</div>
+                    </td>
+                    <td class="fw-bold">${escapeHtml(s.jawaban_benar)}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm mb-1" onclick="openEdit(${index})">
+                            Edit
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteSoal(${index})">
+                            Hapus
+                        </button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        /* =============================
+           TAMBAH SOAL
+        ============================== */
+
+        btnAddSoal.onclick = () => {
+            if (!selectMateri.value) {
+                alert('Pilih materi dulu.');
+                return;
+            }
+            document.getElementById('addPertanyaan').value = '';
+            document.getElementById('addA').value = '';
+            document.getElementById('addB').value = '';
+            document.getElementById('addC').value = '';
+            document.getElementById('addD').value = '';
+            document.getElementById('addCorrect').value = 'A';
+
+            new bootstrap.Modal(document.getElementById('modalAdd')).show();
+        };
+
+        document.getElementById('btnSaveAdd').onclick = async () => {
+            const pertanyaan = document.getElementById('addPertanyaan').value.trim();
+            const opsiA = document.getElementById('addA').value.trim();
+            const opsiB = document.getElementById('addB').value.trim();
+            const opsiC = document.getElementById('addC').value.trim();
+            const opsiD = document.getElementById('addD').value.trim();
+            const correct = document.getElementById('addCorrect').value;
+            const kkm = document.getElementById('addKKM').value;
+            const idMateri = selectMateri.value;
+
+            if (!pertanyaan || !opsiA || !opsiB || !opsiC || !opsiD) {
+                alert('Pertanyaan dan semua pilihan (A-D) wajib diisi.');
+                return;
+            }
+
+            try {
+                // Jika belum ada uji sertifikasi untuk materi ini, buat dulu
+                if (!currentTes) {
+                    const resTes = await api.post('/admin/sertifikasi/tes', {
+                        id_materi: idMateri,
+                        kkm: kkm || 70,
+                    });
+                    currentTes = resTes.data.data || resTes.data;
+                    infoUjiText.textContent = `Uji Sertifikasi terdaftar (Kode Tes: ${currentTes.kode_tes}).`;
+                }
+
+                // Tambah satu soal ke uji ini
+                await api.post('/admin/sertifikasi/soal/add', {
+                    kode_tes: currentTes.kode_tes,
+                    pertanyaan: pertanyaan,
+                    opsi_a: opsiA,
+                    opsi_b: opsiB,
+                    opsi_c: opsiC,
+                    opsi_d: opsiD,
+                    jawaban_benar: correct,
+                });
+
+                bootstrap.Modal.getInstance(document.getElementById('modalAdd')).hide();
+                await loadSoalForTes(currentTes.kode_tes);
+            } catch (e) {
+                console.error(e);
+                alert(e.response?.data?.message || 'Gagal menyimpan soal sertifikasi');
+            }
+        };
+
+        /* =============================
+           EDIT SOAL
+        ============================== */
+
+        window.openEdit = function(index) {
+            const s = currentSoal[index];
+            if (!s) return;
+
+            document.getElementById('editIndex').value = index;
+            document.getElementById('editPertanyaan').value = s.pertanyaan || '';
+            document.getElementById('editA').value = s.opsi_a || '';
+            document.getElementById('editB').value = s.opsi_b || '';
+            document.getElementById('editC').value = s.opsi_c || '';
+            document.getElementById('editD').value = s.opsi_d || '';
+            document.getElementById('editCorrect').value = s.jawaban_benar || 'A';
+
+            new bootstrap.Modal(document.getElementById('modalEdit')).show();
+        };
+
+        document.getElementById('btnSaveEdit').onclick = async () => {
+            const idx = document.getElementById('editIndex').value;
+            const s = currentSoal[idx];
+            if (!s) return;
+
+            const pertanyaan = document.getElementById('editPertanyaan').value.trim();
+            const opsiA = document.getElementById('editA').value.trim();
+            const opsiB = document.getElementById('editB').value.trim();
+            const opsiC = document.getElementById('editC').value.trim();
+            const opsiD = document.getElementById('editD').value.trim();
+            const correct = document.getElementById('editCorrect').value;
+
+            if (!pertanyaan || !opsiA || !opsiB || !opsiC || !opsiD) {
+                alert('Pertanyaan dan semua pilihan (A-D) wajib diisi.');
+                return;
+            }
+
+            try {
+                await api.put(`/admin/sertifikasi/soal/${s.id_soal}`, {
+                    pertanyaan: pertanyaan,
+                    opsi_a: opsiA,
+                    opsi_b: opsiB,
+                    opsi_c: opsiC,
+                    opsi_d: opsiD,
+                    jawaban_benar: correct,
+                });
+
+                bootstrap.Modal.getInstance(document.getElementById('modalEdit')).hide();
+                await loadSoalForTes(currentTes.kode_tes);
+            } catch (e) {
+                console.error(e);
+                alert(e.response?.data?.message || 'Gagal mengupdate soal sertifikasi');
+            }
+        };
+
+        /* =============================
+           HAPUS SOAL
+        ============================== */
+
+        window.deleteSoal = async function(index) {
+            const s = currentSoal[index];
+            if (!s) return;
+
+            if (!confirm('Yakin ingin menghapus soal sertifikasi ini?')) return;
+
+            try {
+                await api.delete(`/admin/sertifikasi/soal/${s.id_soal}`);
+                await loadSoalForTes(currentTes.kode_tes);
+            } catch (e) {
+                console.error(e);
+                alert(e.response?.data?.message || 'Gagal menghapus soal sertifikasi');
+            }
+        };
+
+        /* =============================
+           EVENT HANDLER FILTER
+        ============================== */
+
+        selectPaket.addEventListener('change', loadMateris);
+        selectBahasa.addEventListener('change', loadMateris);
+        selectLevel.addEventListener('change', loadMateris);
+        selectMateri.addEventListener('change', loadTesForMateri);
+
+        /* =============================
+           INIT
+        ============================== */
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadPakets();
+            await loadBahasas();
+        });
     </script>
-
-</body>
-</html>
+@endpush

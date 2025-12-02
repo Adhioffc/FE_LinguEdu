@@ -87,7 +87,7 @@ Route::view('/admin/login', 'auth.loginadmin')->name('admin.login');
 // })->name('admin.login.post');
 
 Route::get('/admin/dashboard', function () {
-    return view('Admin.dashboard');
+    return view('admin.dashboard');
 })->name('admin.dashboard');
 
 
@@ -121,3 +121,8 @@ Route::view('/admin/bahasa', 'Admin.Pages.bahasa')->name('admin.bahasa');
 Route::view('/admin/materi', 'Admin.Pages.materi')->name('admin.materi');
 Route::view('/admin/kuis', 'Admin.Pages.kuis')->name('admin.kuis');
 Route::view('/admin/sertifikasi', 'Admin.Pages.sertifikasi')->name('admin.sertifikasi');
+Route::view('/admin/sertifikat', 'Admin.Pages.sertifikat')->name('admin.sertifikat');
+
+Route::get('/member/kuis/{id_kuis}', function ($id_kuis) {
+        return view('member.dashboard.kuis.show', compact('id_kuis'));
+    })->name('member.kuis.show');
