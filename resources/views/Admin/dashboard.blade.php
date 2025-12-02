@@ -9,7 +9,13 @@
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Dashboard LinguEdu</h1>
             <div class="text-sm md:text-base text-gray-600 font-semibold" id="clock"></div>
+            <div class="border-top pt-1">
+                <a href="{{ route('login.simulasi') }}" class="text-danger fw-semibold text-decoration-none">
+                    🚪 Keluar
+                </a>
+            </div>
         </div>
+
 
         {{-- NOTIFIKASI VERIFIKASI AKUN (diisi via API) --}}
         <div id="pendingBox"

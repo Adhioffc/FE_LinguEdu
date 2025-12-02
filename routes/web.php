@@ -68,9 +68,9 @@ Route::get('/member/video/{slug}', function ($slug) {
     return view('member.dashboard.video', ['slug' => $slug]);
 })->name('member.video');
 
-Route::get('/member/teori', function () {
-    return view('member.dashboard.teori');
-})->name('member.teori');
+// Route::get('/member/teori', function () {
+//     return view('member.dashboard.teori');
+// })->name('member.teori');
 
 
 // ======== ADMIN UI ONLY (Blade) ========
@@ -123,6 +123,28 @@ Route::view('/admin/kuis', 'Admin.Pages.kuis')->name('admin.kuis');
 Route::view('/admin/sertifikasi', 'Admin.Pages.sertifikasi')->name('admin.sertifikasi');
 Route::view('/admin/sertifikat', 'Admin.Pages.sertifikat')->name('admin.sertifikat');
 
-Route::get('/member/kuis/{id_kuis}', function ($id_kuis) {
-        return view('member.dashboard.kuis.show', compact('id_kuis'));
-    })->name('member.kuis.show');
+// Route::get('/member/kuis/{id_kuis}', function ($id_kuis) {
+//     return view('member.dashboard.kuis.show', compact('id_kuis'));
+// })->name('member.kuis.show');
+
+// // TEORI
+// Route::get('/member/teori/{slug?}', function ($slug = 'introduction-to-programming') {
+//     return view('member.dashboard.teori', compact('slug'));
+// })->name('member.teori');
+
+// // KUIS – pakai slug, bukan id_kuis
+// Route::get('/member/kuis/{slug}', function ($slug) {
+//     return view('member.dashboard.kuis.show', compact('slug'));
+// })->name('member.kuis.show');
+
+// ------ TEORI ------
+Route::get('/member/teori/{slug?}', function ($slug = 'introduction-to-programming') {
+    return view('member.dashboard.teori', compact('slug'));
+})->name('member.teori');
+
+// ------ KUIS (pakai slug) ------
+Route::get('/member/kuis/{slug}', function ($slug) {
+    return view('member.dashboard.kuis.show', compact('slug'));
+})->name('member.kuis.show');
+
+

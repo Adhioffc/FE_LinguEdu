@@ -2,32 +2,40 @@
 
 @section('title', 'Teori Pembelajaran')
 
-{{-- Tambahan CSS khusus halaman Teori --}}
+{{-- CSS khusus teori --}}
 @section('style')
     <link rel="stylesheet" href="{{ asset('css/teori.css') }}">
 @endsection
 
 @section('content')
     @php
-        $slug = request()->segment(3) ?? 'introduction-to-programming';
+        // slug dikirim dari route /member/teori/{slug?}
+        $slug = $slug ?? (request()->route('slug') ?? 'introduction-to-programming');
         $title = ucwords(str_replace('-', ' ', $slug));
-        $quizUrl = url('/member/kuis/' . $slug);
+
+        // link ke kuis dummy
+        $quizUrl = route('member.kuis.show', ['slug' => $slug]);
     @endphp
 
     <div class="container py-5">
+        {{-- HEADER --}}
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="fw-bold text-primary mb-1">📘 Teori: {{ $title }}</h2>
                 <small class="text-muted">Durasi baca ~10 menit</small>
             </div>
-            <div>
-                <a href="{{ url()->previous() }}" class="btn btn-outline-secondary me-2">← Kembali</a>
-                <a href="{{ $quizUrl }}" class="btn btn-success">Mulai Kuis 🎯</a>
+            <div class="text-end">
+                <a href="{{ url()->previous() }}" class="btn btn-outline-secondary me-2">
+                    ← Kembali
+                </a>
+                <a href="{{ $quizUrl }}" class="btn btn-success">
+                    Mulai Kuis 🎯
+                </a>
             </div>
         </div>
 
         <div class="row g-4">
-            <!-- Main content -->
+            {{-- MAIN CONTENT --}}
             <div class="col-lg-8">
                 <div class="card shadow-sm mb-4">
                     <div class="card-body">
@@ -51,7 +59,7 @@
                         <ol>
                             <li><strong>Variabel:</strong> tempat menyimpan data.</li>
                             <li><strong>Tipe data:</strong> angka, teks, boolean, dll.</li>
-                            <li><strong>Kontrol alur:</strong> if/else, loop (for, while).</li>
+                            <li><strong>Kontrol alur:</strong> if/else, loop (<code>for</code>, <code>while</code>).</li>
                             <li><strong>Fungsi:</strong> blok kode yang dapat dipanggil ulang.</li>
                             <li><strong>Struktur data dasar:</strong> array, objek/associative array.</li>
                         </ol>
@@ -89,22 +97,26 @@ echo greet("Siswa");
 
                         <h5 id="summary" class="mt-3">Ringkasan</h5>
                         <p>
-                            Kuasai logika, variabel, kontrol alur, dan fungsi terlebih dahulu. Lanjutkan ke struktur data
-                            dan paradigma pemrograman.
+                            Kuasai logika, variabel, kontrol alur, dan fungsi terlebih dahulu.
+                            Lanjutkan ke struktur data dan paradigma pemrograman.
                         </p>
 
-                        <div class="d-flex justify-content-between mt-4">
-                            <div class="text-muted">Materi: {{ $slug }}</div>
+                        <div class="d-flex justify-content-between mt-4 flex-wrap gap-2">
+                            <div class="text-muted small">Materi: {{ $slug }}</div>
                             <div>
-                                <a href="#" class="btn btn-outline-primary btn-sm me-2">Simpan Catatan ✍️</a>
-                                <a href="{{ $quizUrl }}" class="btn btn-success btn-sm">Mulai Kuis 🎯</a>
+                                <a href="#" class="btn btn-outline-primary btn-sm me-2">
+                                    Simpan Catatan ✍️
+                                </a>
+                                <a href="{{ $quizUrl }}" class="btn btn-success btn-sm">
+                                    Mulai Kuis 🎯
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- References / further reading -->
-                <div class="card">
+                {{-- REFERENSI --}}
+                <div class="card shadow-sm">
                     <div class="card-body">
                         <h6 class="mb-3">Referensi & Bacaan Lanjutan</h6>
                         <ul class="mb-0">
@@ -116,7 +128,7 @@ echo greet("Siswa");
                 </div>
             </div>
 
-            <!-- Sidebar -->
+            {{-- SIDEBAR --}}
             <div class="col-lg-4">
                 <div class="position-sticky" style="top: 100px;">
                     <div class="card mb-3 shadow-sm">
@@ -140,7 +152,7 @@ echo greet("Siswa");
                                     <div class="progress-bar bg-success" role="progressbar" style="width: 25%;"></div>
                                 </div>
                             </div>
-                            <small class="text-muted">25% selesai</small>
+                            <small class="text-muted">25% selesai (dummy)</small>
                             <div class="mt-3">
                                 <a href="#" class="btn btn-primary btn-sm">Tandai Selesai</a>
                             </div>
@@ -163,9 +175,9 @@ echo greet("Siswa");
         </div>
     </div>
 
-    <!-- Floating button -->
+    {{-- Floating button ke kuis --}}
     <a href="{{ $quizUrl }}" class="btn btn-success position-fixed d-none d-md-inline-flex align-items-center"
-        style="right:20px; bottom:20px; z-index:1050; padding: .6rem 1rem; border-radius: 999px;">
+        style="right:20px; bottom:20px; z-index:1050; padding:.6rem 1rem; border-radius:999px;">
         🎯 Mulai Kuis
     </a>
 @endsection
