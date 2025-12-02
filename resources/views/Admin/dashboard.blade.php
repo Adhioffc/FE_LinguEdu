@@ -1,68 +1,104 @@
 @extends('layouts.admin')
 
+@section('title', 'Dashboard Admin')
+
 @section('content')
     <div class="p-6 bg-gray-50 min-h-screen">
 
-        {{-- Header --}}
+        {{-- HEADER --}}
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">Dashboard LinguEdu</h1>
-            <div class="text-sm text-gray-600 font-semibold" id="clock"></div>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Dashboard LinguEdu</h1>
+            <div class="text-sm md:text-base text-gray-600 font-semibold" id="clock"></div>
         </div>
 
-        {{-- Notifikasi Verifikasi Akun --}}
-        @if (($pendingVerifications ?? 0) > 0)
-            <div
-                class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 mb-6 shadow-sm rounded-lg flex items-center justify-between">
+        {{-- NOTIFIKASI VERIFIKASI AKUN (diisi via API) --}}
+        <div id="pendingBox"
+            class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 mb-6 shadow-sm rounded-lg flex justify-between items-center">
+            <div>
+                ⚠️ <strong id="pendingCount">0</strong> akun member menunggu verifikasi!
+            </div>
+            <a href="{{ route('admin.users') }}"
+                class="underline text-yellow-700 hover:text-yellow-900 text-sm font-semibold">
+                Lihat daftar user
+            </a>
+        </div>
+
+        {{-- STAT KECIL DI ATAS (TOTAL MEMBER + MEMBER BARU) --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
+
+            <div class="bg-white shadow rounded-xl p-4 flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl">
+                    👥
+                </div>
                 <div>
-                    ⚠️ <strong>{{ $pendingVerifications }}</strong> akun member menunggu verifikasi!
-                    <span class="ml-1 text-sm">
-                        (email_verified_at masih kosong)
-                    </span>
-                </div>
-                <a href="{{ route('admin.users') }}" class="underline text-yellow-700 hover:text-yellow-900 text-sm">
-                    Lihat sekarang
-                </a>
-            </div>
-        @endif
-
-        {{-- Statistik Member & Penghasilan --}}
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-
-            {{-- Statistik Member --}}
-            <div class="bg-white shadow rounded-xl p-5 relative">
-                <h2 class="text-lg font-semibold text-gray-800 mb-3">Statistik Member</h2>
-                <div class="flex flex-col lg:flex-row justify-between items-center">
-                    <div class="mb-4 lg:mb-0">
-                        <p class="text-gray-600">Total Member:</p>
-                        <p class="text-2xl font-bold text-blue-600">
-                            {{ number_format($totalMembers ?? 0) }}
-                        </p>
-                        <p class="text-gray-500 text-sm">
-                            +{{ $newMembersThisWeek ?? 0 }} selama 7 hari terakhir
-                        </p>
-                        <p class="text-gray-400 text-xs mt-1">
-                            Diagram donat di samping menunjukkan sebaran member per bahasa.
-                        </p>
-                    </div>
-                    <div class="w-full lg:w-1/2 h-48">
-                        <canvas id="memberChart" class="w-full h-full"></canvas>
-                    </div>
+                    <p class="text-gray-500 text-sm">Total Member</p>
+                    <p id="statTotalMember" class="text-2xl font-bold text-gray-800">0</p>
                 </div>
             </div>
 
-            {{-- Grafik Penghasilan --}}
-            <div class="bg-white shadow rounded-xl p-5">
-                <h2 class="text-lg font-semibold text-gray-800 mb-3">Grafik Penghasilan</h2>
-                <p class="text-gray-500 text-sm mb-2">
-                    Total pembayaran registrasi per bulan (maks. 6 bulan terakhir).
-                </p>
-                <div class="w-full h-48">
-                    <canvas id="incomeChart" class="w-full h-full"></canvas>
+            <div class="bg-white shadow rounded-xl p-4 flex items-center gap-4">
+                <div
+                    class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl">
+                    ➕
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Member Baru (7 Hari Terakhir)</p>
+                    <p id="statNewMember" class="text-2xl font-bold text-gray-800">0</p>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-xl p-4 hidden xl:flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xl">
+                    📊
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Info Singkat</p>
+                    <p id="statInfo" class="text-base font-semibold text-gray-800">
+                        Memuat statistik...
+                    </p>
                 </div>
             </div>
         </div>
 
-        {{-- MENU PENGATURAN --}}
+        {{-- GRAFIK STATISTIK --}}
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+
+            {{-- CHART PAKET --}}
+            <div class="bg-white shadow rounded-xl p-5">
+                <h2 class="text-lg font-semibold text-gray-800 mb-3">Distribusi Member per Paket</h2>
+                <p class="text-xs text-gray-500 mb-3">
+                    Menunjukkan berapa banyak registrasi per paket (Basic / Intermediate / Advance, dll).
+                </p>
+                <div class="h-56">
+                    <canvas id="chartPaket"></canvas>
+                </div>
+            </div>
+
+            {{-- CHART BAHASA --}}
+            <div class="bg-white shadow rounded-xl p-5">
+                <h2 class="text-lg font-semibold text-gray-800 mb-3">Distribusi Member per Bahasa</h2>
+                <p class="text-xs text-gray-500 mb-3">
+                    Berapa banyak member yang mengambil tiap bahasa (Inggris, Jepang, Korea, dll).
+                </p>
+                <div class="h-56">
+                    <canvas id="chartBahasa"></canvas>
+                </div>
+            </div>
+
+            {{-- CHART KURSUS (BAHASA + PAKET) --}}
+            <div class="bg-white shadow rounded-xl p-5">
+                <h2 class="text-lg font-semibold text-gray-800 mb-3">Kombinasi Kursus (Bahasa + Paket)</h2>
+                <p class="text-xs text-gray-500 mb-3">
+                    Contoh label: "Inggris - Basic", "Jepang - Intensive", dll.
+                </p>
+                <div class="h-56">
+                    <canvas id="chartKursus"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        {{-- MENU PENGATURAN (TETAP, HANYA DATA DI ATAS YANG DINAMIS) --}}
         <div class="bg-white shadow rounded-xl p-6 mb-6">
             <h2 class="text-lg font-semibold text-gray-800 mb-4">Menu Pengaturan</h2>
 
@@ -84,9 +120,9 @@
 
                 {{-- Setting Bahasa --}}
                 <a href="{{ route('admin.bahasa') }}"
-                    class="p-4 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 transition shadow-sm block">
-                    <h3 class="text-green-700 font-semibold mb-1">📦 Setting Bahasa</h3>
-                    <p class="text-sm text-gray-600">Atur bahasa.</p>
+                    class="p-4 bg-teal-50 border border-teal-200 rounded-xl hover:bg-teal-100 transition shadow-sm block">
+                    <h3 class="text-teal-700 font-semibold mb-1">🌐 Setting Bahasa</h3>
+                    <p class="text-sm text-gray-600">Atur bahasa yang tersedia.</p>
                 </a>
 
                 {{-- Setting Materi --}}
@@ -100,21 +136,21 @@
                 <a href="{{ route('admin.kuis') }}"
                     class="p-4 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 transition shadow-sm block">
                     <h3 class="text-purple-700 font-semibold mb-1">❓ Setting Kuis</h3>
-                    <p class="text-sm text-gray-600">Atur soal kuis & evaluasi.</p>
+                    <p class="text-sm text-gray-600">Atur soal kuis & evaluasi materi.</p>
                 </a>
 
                 {{-- Setting Uji Sertifikasi --}}
                 <a href="{{ route('admin.sertifikasi') }}"
                     class="p-4 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition shadow-sm block">
-                    <h3 class="text-red-700 font-semibold mb-1">🎓 Setting Sertifikasi</h3>
-                    <p class="text-sm text-gray-600">Konfigurasi uji sertifikasi & soal.</p>
+                    <h3 class="text-red-700 font-semibold mb-1">🏅 Setting Uji Sertifikasi</h3>
+                    <p class="text-sm text-gray-600">Konfigurasi soal uji sertifikasi.</p>
                 </a>
 
-                {{-- Setting Template Sertifikat --}}
+                {{-- Setting Sertifikat --}}
                 <a href="{{ route('admin.sertifikat') }}"
-                    class="p-4 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition shadow-sm block">
-                    <h3 class="text-red-700 font-semibold mb-1">🎓 Setting Sertifikat</h3>
-                    <p class="text-sm text-gray-600">Konfigurasi template & format sertifikat.</p>
+                    class="p-4 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition shadow-sm block">
+                    <h3 class="text-indigo-700 font-semibold mb-1">🎓 Setting Sertifikat</h3>
+                    <p class="text-sm text-gray-600">Template & pengaturan sertifikat.</p>
                 </a>
 
             </div>
@@ -122,72 +158,183 @@
 
     </div>
 
-    {{-- Script --}}
+    {{-- SCRIPTS --}}
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Jam realtime
+        // ===============================
+        //  INSTANCE AXIOS KHUSUS API
+        // ===============================
+        const api = axios.create({
+            baseURL: 'http://127.0.0.1:8000/api', // sama seperti halaman admin lain
+            headers: {
+                Accept: 'application/json',
+            },
+        });
+
+        // ===============================
+        //  JAM REALTIME
+        // ===============================
         function updateClock() {
             const now = new Date();
-            document.getElementById('clock').textContent = now.toLocaleTimeString('id-ID');
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('clock').textContent =
+                now.toLocaleDateString('id-ID', options);
         }
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Data dari backend (Blade -> JS)
-        const memberLabels = @json($memberChartLabels ?? []);
-        const memberData = @json($memberChartData ?? []);
+        // ===============================
+        //  DASHBOARD DATA DARI API
+        // ===============================
+        let chartPaket = null;
+        let chartBahasa = null;
+        let chartKursus = null;
 
-        const incomeLabels = @json($incomeLabels ?? []);
-        const incomeData = @json($incomeData ?? []);
+        async function loadDashboardSummary() {
+            try {
+                // ⚠️ PENTING: pakai instance `api`, dan pathnya TANPA /api lagi
+                const res = await api.get('/admin/dashboard/summary');
+                const data = res.data;
 
-        // Warna untuk doughnut (lebih banyak dari jumlah label biar aman)
-        const donutColors = ['#3b82f6', '#10b981', '#facc15', '#f97316', '#a855f7', '#ec4899'];
+                // --- NOTIFIKASI PENDING ---
+                const pendingCount = data.pending_verifications ?? 0;
+                const pendingBox = document.getElementById('pendingBox');
+                const pendingCountEl = document.getElementById('pendingCount');
 
-        // Grafik Member (per bahasa)
-        const ctx1 = document.getElementById('memberChart').getContext('2d');
-        new Chart(ctx1, {
-            type: 'doughnut',
-            data: {
-                labels: memberLabels.length ? memberLabels : ['Belum ada data'],
-                datasets: [{
-                    data: memberData.length ? memberData : [1],
-                    backgroundColor: donutColors.slice(0, Math.max(memberData.length, 1)),
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
+                pendingCountEl.textContent = pendingCount;
+                if (pendingCount > 0) {
+                    pendingBox.classList.remove('hidden');
+                } else {
+                    pendingBox.classList.add('hidden');
+                }
+
+                // --- STAT KECIL ---
+                document.getElementById('statTotalMember').textContent =
+                    data.total_members ?? 0;
+                document.getElementById('statNewMember').textContent =
+                    data.new_members_this_week ?? 0;
+
+                const infoEl = document.getElementById('statInfo');
+                const topBahasa = (data.bahasa?.labels?.[0]) || '-';
+                const topPaket = (data.paket?.labels?.[0]) || '-';
+                infoEl.textContent = `Bahasa terpopuler: ${topBahasa}, Paket terbanyak: ${topPaket}.`;
+
+                // --- GRAFIK ---
+                renderChartPaket(data.paket?.labels || [], data.paket?.data || []);
+                renderChartBahasa(data.bahasa?.labels || [], data.bahasa?.data || []);
+                renderChartKursus(data.kursus?.labels || [], data.kursus?.data || []);
+
+            } catch (e) {
+                console.error('Dashboard error:', e.response?.status, e.response?.data ?? e);
+                alert(e.response?.data?.message || 'Gagal memuat data dashboard');
+            }
+        }
+
+        // ===============================
+        //  RENDER CHART (tetap sama)
+        // ===============================
+        function renderChartPaket(labels, values) {
+            const ctx = document.getElementById('chartPaket').getContext('2d');
+            if (chartPaket) chartPaket.destroy();
+
+            chartPaket = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: [
+                            '#3b82f6', '#10b981', '#f97316',
+                            '#a855f7', '#facc15', '#ef4444'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
-        // Grafik Penghasilan
-        const ctx2 = document.getElementById('incomeChart').getContext('2d');
-        new Chart(ctx2, {
-            type: 'line',
-            data: {
-                labels: incomeLabels.length ? incomeLabels : ['Belum ada data'],
-                datasets: [{
-                    label: 'Penghasilan (total_byr)',
-                    data: incomeData.length ? incomeData : [0],
-                    borderColor: '#16a34a',
-                    fill: false,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
+        function renderChartBahasa(labels, values) {
+            const ctx = document.getElementById('chartBahasa').getContext('2d');
+            if (chartBahasa) chartBahasa.destroy();
+
+            chartBahasa = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Jumlah Member',
+                        data: values,
+                        backgroundColor: '#10b981'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
+
+        function renderChartKursus(labels, values) {
+            const ctx = document.getElementById('chartKursus').getContext('2d');
+            if (chartKursus) chartKursus.destroy();
+
+            chartKursus = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Jumlah Registrasi',
+                        data: values,
+                        backgroundColor: '#6366f1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // INIT
+        document.addEventListener('DOMContentLoaded', loadDashboardSummary);
     </script>
 @endsection
