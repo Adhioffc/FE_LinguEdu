@@ -10,7 +10,7 @@
 @section('content')
     @php
         // slug dikirim dari route /member/teori/{slug?}
-        $slug = $slug ?? (request()->route('slug') ?? 'introduction-to-programming');
+        $slug = $slug ?? request()->route('slug') ?? 'introduction-to-programming';
         $title = ucwords(str_replace('-', ' ', $slug));
 
         // link ke kuis dummy
