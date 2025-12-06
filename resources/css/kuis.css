@@ -1,0 +1,166 @@
+/* ===== PASTEL THEME VARIABLES (Sama dengan Teori) ===== */
+:root {
+    --pastel-purple: #d8bfd8;
+    --pastel-blue: #add8e6;
+    --pastel-pink: #ffb3d9;
+    --pastel-mint: #b3f0e0;
+    --accent-purple: #9966cc;
+    --accent-blue: #6699cc;
+    --accent-pink: #ff6b9d;
+    --accent-green: #66cc66;
+    --text-dark: #2d3436;
+    --text-light: #636e72;
+    --bg-light: #f8f9fa;
+}
+
+body {
+    background-color: #fcfdfe;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* ===== HEADER ===== */
+.quiz-header {
+    background: linear-gradient(135deg, rgba(173,216,230,0.4) 0%, rgba(216,191,216,0.4) 100%);
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid white;
+    box-shadow: 0 10px 30px rgba(173,216,230,0.2);
+}
+
+.quiz-title {
+    font-weight: 800;
+    color: var(--accent-purple);
+    margin-bottom: 0.5rem;
+}
+
+/* ===== PROGRESS BAR STICKY ===== */
+.quiz-progress-container {
+    position: sticky;
+    top: 80px; /* Sesuaikan dengan tinggi navbar kamu */
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    padding: 1rem 0;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #eee;
+}
+
+.progress {
+    height: 10px;
+    border-radius: 20px;
+    background-color: #f0f0f0;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+    border-radius: 20px;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ===== QUESTION CARDS ===== */
+.quiz-card {
+    border: none;
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    margin-bottom: 2rem;
+    padding: 2rem;
+    transition: transform 0.3s ease;
+    border-left: 5px solid transparent;
+}
+
+.quiz-card.active {
+    border-left-color: var(--accent-purple);
+    box-shadow: 0 12px 30px rgba(153,102,204,0.15);
+}
+
+.question-text {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 1.5rem;
+}
+
+/* ===== CUSTOM OPTION STYLING (Radio & Checkbox) ===== */
+/* Sembunyikan input asli */
+.option-input {
+    display: none;
+}
+
+/* Label yang bertindak sebagai tombol */
+.option-label {
+    display: block;
+    padding: 1rem 1.5rem;
+    margin-bottom: 0.8rem;
+    border: 2px solid #f0f0f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    background: white;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.option-label:hover {
+    background-color: #fafafa;
+    border-color: var(--pastel-blue);
+    transform: translateX(5px);
+}
+
+/* State ketika dipilih */
+.option-input:checked + .option-label {
+    background: linear-gradient(135deg, rgba(153,102,204,0.1), rgba(102,153,204,0.1));
+    border-color: var(--accent-purple);
+    color: var(--accent-purple);
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(153,102,204,0.15);
+}
+
+/* Indikator bulat/kotak di kiri */
+.option-label::before {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    border: 2px solid #ddd;
+    border-radius: 50%; /* Untuk radio */
+    vertical-align: middle;
+    transition: all 0.3s ease;
+}
+
+/* Ubah jadi kotak untuk checkbox */
+.checkbox-group .option-label::before {
+    border-radius: 6px;
+}
+
+.option-input:checked + .option-label::before {
+    background-color: var(--accent-purple);
+    border-color: var(--accent-purple);
+    box-shadow: 0 0 0 3px rgba(153,102,204,0.2);
+}
+
+/* ===== SUBMIT BUTTON ===== */
+.btn-finish-quiz {
+    background: linear-gradient(135deg, var(--accent-green), #4CAF50);
+    color: white;
+    border: none;
+    padding: 1rem 3rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-finish-quiz:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 15px 35px rgba(76, 175, 80, 0.4);
+    color: white;
+}
