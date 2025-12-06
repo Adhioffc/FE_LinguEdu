@@ -1,245 +1,571 @@
 @extends('layouts.admin')
+@section('title', 'Manajemen Materi')
 
 @section('content')
-<div class="container py-5">
+    <div class="p-6">
 
-    <a href="/admin/dashboard" class="btn btn-secondary mb-4">⬅ Kembali ke Dashboard</a>
+        {{-- HEADER --}}
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Manajemen Materi</h1>
+                <p class="text-sm text-gray-500 mt-1">
+                    Kelola materi per kursus (bahasa + paket) dan atur level pembelajarannya.
+                </p>
+            </div>
 
-    <h1 class="mb-4">📘 Manajemen Materi</h1>
+            <button onclick="openAddModal()"
+                class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 shadow text-sm font-semibold">
+                + Tambah Materi
+            </button>
+        </div>
 
-    <!-- Level Selector -->
-    <div class="mb-4">
-        <label class="form-label fw-bold">Pilih Level</label>
-        <select id="levelSelect" class="form-select w-50">
-            <option value="level1">Level 1</option>
-            <option value="level2">Level 2</option>
-            <option value="level3">Level 3</option>
-        </select>
-    </div>
-
-    <!-- Button Tambah -->
-    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addModal">
-        + Tambah Materi
-    </button>
-
-    <!-- Table Materi -->
-    <div class="card">
-        <div class="card-body">
-            <table class="table table-bordered table-striped" id="materiTable">
-                <thead>
-                    <tr class="text-center">
-                        <th width="20%">Gambar</th>
-                        <th width="25%">Judul</th>
-                        <th width="40%">Deskripsi</th>
-                        <th width="15%">Aksi</th>
+        {{-- TABLE LIST MATERI --}}
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="p-4 text-left w-1/5">Judul</th>
+                        <th class="p-4 text-left w-1/5">Kursus</th>
+                        <th class="p-4 text-center w-1/12">Level</th>
+                        <th class="p-4 text-center w-1/12">Tipe</th>
+                        <th class="p-4 text-left w-2/5">Konten / URL</th>
+                        <th class="p-4 text-center w-1/6">Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="materiBody"></tbody>
+                <tbody id="materiList"></tbody>
             </table>
         </div>
     </div>
-</div>
 
-<!-- ========================================================= -->
-<!-- ===================== ADD MODAL ========================= -->
-<!-- ========================================================= -->
-<div class="modal fade" id="addModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+    {{-- ===========================
+        MODAL TAMBAH MATERI
+    ============================ --}}
+    <div id="addModal" class="fixed inset-0 bg-black bg-opacity-40 hidden justify-center items-center z-50">
+        <div class="bg-white w-11/12 md:w-2/3 lg:w-1/2 rounded-xl p-6 shadow-lg max-h-[90vh] overflow-y-auto">
 
-            <div class="modal-header">
-                <h5 class="modal-title">Tambah Materi</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Tambah Materi</h2>
+
+            {{-- PAKET --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Paket</label>
+                <select id="addPaket" class="w-full border p-2 rounded-lg mt-1 text-sm bg-gray-50">
+                    <option value="">-- Pilih Paket --</option>
+                </select>
             </div>
 
-            <div class="modal-body">
-                <label class="form-label fw-bold">Judul Materi</label>
-                <input type="text" class="form-control mb-3" id="addTitle">
-
-                <label class="form-label fw-bold">Deskripsi</label>
-                <textarea class="form-control mb-3" id="addDesc" rows="3"></textarea>
-
-                <label class="form-label fw-bold">URL Gambar</label>
-                <input type="text" class="form-control mb-3" id="addImg">
-
-                <img id="addPreview" src="" class="img-fluid rounded mt-2 d-none" style="max-height: 200px;">
+            {{-- BAHASA --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Bahasa</label>
+                <select id="addBahasa" class="w-full border p-2 rounded-lg mt-1 text-sm bg-gray-50">
+                    <option value="">-- Pilih Bahasa --</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">
+                    Sistem akan otomatis membuat/mencari kursus dari kombinasi paket + bahasa ini.
+                </p>
             </div>
 
-            <div class="modal-footer">
-                <button class="btn btn-success" onclick="saveNewMateri()">Simpan</button>
+
+            {{-- LEVEL --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Level</label>
+                <input id="addLevel" type="number" min="1" max="3"
+                    class="w-full border p-2 rounded-lg mt-1 text-sm" placeholder="Contoh: 1" value="1">
+                <p class="text-xs text-gray-500 mt-1">
+                    Level 1 = materi awal, 2 = materi berikutnya, 3 = materi lanjutan.
+                </p>
             </div>
 
+            {{-- JUDUL --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Judul Materi</label>
+                <input id="addJudul" type="text" class="w-full border p-2 rounded-lg mt-1 text-sm"
+                    placeholder="Contoh: Pengantar Grammar Dasar">
+            </div>
+
+            {{-- URL VIDEO (opsional) --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">URL Video (opsional)</label>
+                <input id="addUrlVideo" type="text" class="w-full border p-2 rounded-lg mt-1 text-sm"
+                    placeholder="https://... (YouTube / link video)">
+                <p class="text-xs text-gray-500 mt-1">
+                    Isi jika materi ini punya video. Kalau kosong, bagian video akan dikosongkan.
+                </p>
+            </div>
+
+            {{-- TEKS TEORI (opsional) --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Teks Teori (opsional)</label>
+                <textarea id="addTeksTeori" rows="5" class="w-full border p-2 rounded-lg mt-1 text-sm"
+                    placeholder="Isi materi teori di sini..."></textarea>
+                <p class="text-xs text-gray-500 mt-1">
+                    Isi jika materi ini punya teks teori. Kalau kosong, bagian teori akan dikosongkan.
+                </p>
+            </div>
+
+            <div class="flex justify-end mt-6">
+                <button onclick="closeAddModal()" class="px-4 py-2 bg-gray-300 rounded mr-2 text-sm font-semibold">
+                    Batal
+                </button>
+                <button onclick="saveAdd()" class="px-4 py-2 bg-blue-600 text-white rounded text-sm font-semibold">
+                    Simpan
+                </button>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- ========================================================= -->
-<!-- ===================== EDIT MODAL ======================== -->
-<!-- ========================================================= -->
-<div class="modal fade" id="editModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+    {{-- ===========================
+        MODAL EDIT MATERI
+    ============================ --}}
+    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-40 hidden justify-center items-center z-50">
+        <div class="bg-white w-11/12 md:w-2/3 lg:w-1/2 rounded-xl p-6 shadow-lg max-h-[90vh] overflow-y-auto">
 
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Materi</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Edit Materi</h2>
+
+            <input type="hidden" id="editIndex">
+
+            {{-- PAKET --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Paket</label>
+                <select id="editPaket" class="w-full border p-2 rounded-lg mt-1 text-sm bg-gray-50">
+                    <option value="">-- Pilih Paket --</option>
+                </select>
             </div>
 
-            <div class="modal-body">
-
-                <input type="hidden" id="editIndex">
-
-                <label class="form-label fw-bold">Judul Materi</label>
-                <input type="text" class="form-control mb-3" id="editTitle">
-
-                <label class="form-label fw-bold">Deskripsi</label>
-                <textarea class="form-control mb-3" id="editDesc" rows="3"></textarea>
-
-                <label class="form-label fw-bold">URL Gambar</label>
-                <input type="text" class="form-control mb-3" id="editImg">
-
-                <img id="editPreview" src="" class="img-fluid rounded mt-2 d-none" style="max-height: 200px;">
+            {{-- BAHASA --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Bahasa</label>
+                <select id="editBahasa" class="w-full border p-2 rounded-lg mt-1 text-sm bg-gray-50">
+                    <option value="">-- Pilih Bahasa --</option>
+                </select>
             </div>
 
-            <div class="modal-footer">
-                <button class="btn btn-primary" onclick="saveEdit()">Simpan Perubahan</button>
+
+            {{-- LEVEL --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Level</label>
+                <input id="editLevel" type="number" min="1" max="3"
+                    class="w-full border p-2 rounded-lg mt-1 text-sm">
             </div>
 
+            {{-- JUDUL --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Judul Materi</label>
+                <input id="editJudul" type="text" class="w-full border p-2 rounded-lg mt-1 text-sm">
+            </div>
+
+            {{-- URL VIDEO (opsional) --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">URL Video (opsional)</label>
+                <input id="editUrlVideo" type="text" class="w-full border p-2 rounded-lg mt-1 text-sm">
+            </div>
+
+            {{-- TEKS TEORI (opsional) --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Teks Teori (opsional)</label>
+                <textarea id="editTeksTeori" rows="5" class="w-full border p-2 rounded-lg mt-1 text-sm"></textarea>
+            </div>
+
+            <div class="flex justify-end mt-6">
+                <button onclick="closeEditModal()" class="px-4 py-2 bg-gray-300 rounded mr-2 text-sm font-semibold">
+                    Batal
+                </button>
+                <button onclick="saveEdit()" class="px-4 py-2 bg-yellow-500 text-white rounded text-sm font-semibold">
+                    Update
+                </button>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- ========================================================= -->
-<!-- ===================== JAVASCRIPT ======================== -->
-<!-- ========================================================= -->
-<script>
-    // Default materi (jika localStorage kosong)
-    let materi = JSON.parse(localStorage.getItem("materi")) || {
-        level1: [
-            {
-                title: "Pengenalan Dasar",
-                desc: "Materi dasar untuk pemula.",
-                img: "https://via.placeholder.com/200"
-            }
-        ],
-        level2: [],
-        level3: []
-    };
+    {{-- ===========================
+        MODAL DELETE
+    ============================ --}}
+    <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-40 hidden justify-center items-center z-50">
+        <div class="bg-white w-96 rounded-xl p-6 shadow-lg text-center">
+            <h2 class="text-xl font-semibold mb-2 text-gray-800">Hapus Materi Ini?</h2>
+            <p class="text-sm text-gray-600 mb-4">
+                Materi yang dihapus tidak bisa dikembalikan.
+            </p>
 
-    let currentLevel = "level1";
+            <input type="hidden" id="deleteIndex">
 
-    // ====================================================
-    // Render Data ke Table
-    // ====================================================
-    function renderTable() {
-        const tbody = document.getElementById("materiBody");
-        tbody.innerHTML = "";
-
-        materi[currentLevel].forEach((item, index) => {
-            tbody.innerHTML += `
-                <tr>
-                    <td class="text-center">
-                        <img src="${item.img}" class="img-fluid rounded" style="max-height:120px;">
-                    </td>
-                    <td>${item.title}</td>
-                    <td>${item.desc}</td>
-                    <td class="text-center">
-                        <button class="btn btn-warning btn-sm" onclick="openEdit(${index})">Edit</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteMateri(${index})">Hapus</button>
-                    </td>
-                </tr>
-            `;
-        });
-    }
-
-    document.getElementById("levelSelect").addEventListener("change", function () {
-        currentLevel = this.value;
-        renderTable();
-    });
-
-    // ====================================================
-    // Tambah Materi
-    // ====================================================
-    function saveNewMateri() {
-        const title = document.getElementById("addTitle").value;
-        const desc = document.getElementById("addDesc").value;
-        const img = document.getElementById("addImg").value;
-
-        if (!title || !desc || !img) {
-            alert("Semua field wajib diisi!");
-            return;
-        }
-
-        materi[currentLevel].push({ title, desc, img });
-        localStorage.setItem("materi", JSON.stringify(materi));
-
-        document.getElementById("addTitle").value = "";
-        document.getElementById("addDesc").value = "";
-        document.getElementById("addImg").value = "";
-
-        document.getElementById("addPreview").classList.add("d-none");
-
-        renderTable();
-        bootstrap.Modal.getInstance(document.getElementById('addModal')).hide();
-    }
-
-    // Preview gambar ADD
-    document.getElementById("addImg").addEventListener("input", function () {
-        const img = document.getElementById("addPreview");
-        img.src = this.value;
-        img.classList.remove("d-none");
-    });
-
-    // ====================================================
-    // Edit Materi
-    // ====================================================
-    function openEdit(index) {
-        const item = materi[currentLevel][index];
-
-        document.getElementById("editIndex").value = index;
-        document.getElementById("editTitle").value = item.title;
-        document.getElementById("editDesc").value = item.desc;
-        document.getElementById("editImg").value = item.img;
-
-        const prev = document.getElementById("editPreview");
-        prev.src = item.img;
-        prev.classList.remove("d-none");
-
-        new bootstrap.Modal(document.getElementById("editModal")).show();
-    }
-
-    function saveEdit() {
-        const i = document.getElementById("editIndex").value;
-
-        materi[currentLevel][i].title = document.getElementById("editTitle").value;
-        materi[currentLevel][i].desc = document.getElementById("editDesc").value;
-        materi[currentLevel][i].img = document.getElementById("editImg").value;
-
-        localStorage.setItem("materi", JSON.stringify(materi));
-        renderTable();
-
-        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-    }
-
-    // Preview gambar EDIT
-    document.getElementById("editImg").addEventListener("input", function () {
-        const img = document.getElementById("editPreview");
-        img.src = this.value;
-        img.classList.remove("d-none");
-    });
-
-    // ====================================================
-    // Hapus Materi
-    // ====================================================
-    function deleteMateri(index) {
-        if (confirm("Yakin ingin menghapus materi ini?")) {
-            materi[currentLevel].splice(index, 1);
-            localStorage.setItem("materi", JSON.stringify(materi));
-            renderTable();
-        }
-    }
-
-    // Render awal
-    renderTable();
-</script>
+            <div class="flex justify-center mt-2">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-300 rounded mr-2 text-sm font-semibold">
+                    Batal
+                </button>
+                <button onclick="confirmDelete()" class="px-4 py-2 bg-red-600 text-white rounded text-sm font-semibold">
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
 @endsection
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const api = axios.create({
+            baseURL: 'http://127.0.0.1:8000/api',
+            headers: {
+                Accept: 'application/json'
+            },
+        });
+
+        let materis = [];
+        let pakets = [];
+        let bahasas = [];
+
+        // ===========================
+        // Helper
+        // ===========================
+        function courseLabel(m) {
+            const course = m.course;
+            if (!course) return '-';
+            const bahasa = course.bahasa ? course.bahasa.nama_bahasa : null;
+            const paket = course.paket ? course.paket.nama_paket : null;
+            if (bahasa && paket) return `${bahasa} - ${paket}`;
+            return course.deskripsi || '-';
+        }
+
+        function previewText(text, limit = 100) {
+            if (!text) return '-';
+            if (text.length <= limit) return text;
+            return text.slice(0, limit) + '...';
+        }
+
+        function fillPaketSelect(selectEl, selectedId = null) {
+            selectEl.innerHTML = '<option value="">-- Pilih Paket --</option>';
+            pakets.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.nama_paket || ('Paket #' + p.id);
+                if (selectedId && String(selectedId) === String(p.id)) opt.selected = true;
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function fillBahasaSelect(selectEl, selectedId = null) {
+            selectEl.innerHTML = '<option value="">-- Pilih Bahasa --</option>';
+            bahasas.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.textContent = b.nama_bahasa || ('Bahasa #' + b.id);
+                if (selectedId && String(selectedId) === String(b.id)) opt.selected = true;
+                selectEl.appendChild(opt);
+            });
+        }
+
+        // ===========================
+        // Load data
+        // ===========================
+        async function loadPakets() {
+            try {
+                const res = await api.get('/paket');
+                pakets = Array.isArray(res.data.data) ? res.data.data : res.data;
+            } catch (e) {
+                console.error(e);
+                alert('Gagal memuat paket');
+            }
+        }
+
+        async function loadBahasas() {
+            try {
+                const res = await api.get('/bahasa');
+                bahasas = Array.isArray(res.data.data) ? res.data.data : res.data;
+            } catch (e) {
+                console.error(e);
+                alert('Gagal memuat bahasa');
+            }
+        }
+
+        async function loadMateri() {
+            try {
+                const res = await api.get('/admin/materi');
+                materis = Array.isArray(res.data.data) ? res.data.data : res.data;
+                renderMateri();
+            } catch (e) {
+                console.error(e);
+                alert('Gagal memuat materi');
+            }
+        }
+
+        function renderMateri() {
+            const tbody = document.getElementById('materiList');
+            tbody.innerHTML = '';
+
+            if (!materis.length) {
+                tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="p-6 text-center text-gray-400 text-sm">
+                    Belum ada materi.
+                </td>
+            </tr>`;
+                return;
+            }
+
+            const sorted = [...materis].sort((a, b) => {
+                if (a.id_course === b.id_course) {
+                    return (a.level || 1) - (b.level || 1);
+                }
+                return a.id_course - b.id_course;
+            });
+
+            sorted.forEach((m) => {
+                let tipeBadge = '';
+                switch (m.tipe) {
+                    case 'video':
+                        tipeBadge =
+                            `<span class="inline-block px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700 font-semibold">Video</span>`;
+                        break;
+                    case 'teori':
+                        tipeBadge =
+                            `<span class="inline-block px-2 py-1 rounded-full text-xs bg-emerald-100 text-emerald-700 font-semibold">Teori</span>`;
+                        break;
+                    case 'campuran':
+                        tipeBadge =
+                            `<span class="inline-block px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-700 font-semibold">Campuran</span>`;
+                        break;
+                    default:
+                        tipeBadge =
+                            `<span class="inline-block px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-500 font-semibold">-</span>`;
+                }
+
+                const kontenParts = [];
+                if (m.url_video) {
+                    kontenParts.push(`
+                <a href="${m.url_video}" target="_blank"
+                   class="text-blue-600 underline text-xs break-all">
+                    ${m.url_video}
+                </a>
+            `);
+                }
+                if (m.teks_teori) {
+                    kontenParts.push(`
+                <p class="text-xs text-gray-700 whitespace-pre-line">
+                    ${previewText(m.teks_teori, 120)}
+                </p>
+            `);
+                }
+                const kontenPreview = kontenParts.length ? kontenParts.join('<div class="h-2"></div>') : '-';
+
+                const originalIndex = materis.findIndex(x => x.id_materi === m.id_materi);
+
+                tbody.innerHTML += `
+            <tr class="border-b hover:bg-gray-50">
+                <td class="p-4 font-semibold text-gray-800 align-top">
+                    ${m.judul}
+                </td>
+                <td class="p-4 text-sm text-gray-700 align-top">
+                    ${courseLabel(m)}
+                </td>
+                <td class="p-4 text-center align-top text-xs font-semibold">
+                    Level ${m.level || 1}
+                </td>
+                <td class="p-4 text-center align-top">
+                    ${tipeBadge}
+                </td>
+                <td class="p-4 align-top">
+                    ${kontenPreview}
+                </td>
+                <td class="p-4 text-center align-top space-x-2">
+                    <button onclick="openEditModal(${originalIndex})"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-yellow-200 text-yellow-600 hover:bg-yellow-50"
+                        title="Edit">✏️</button>
+                    <button onclick="openDeleteModal(${originalIndex})"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-red-200 text-red-600 hover:bg-red-50"
+                        title="Hapus">🗑</button>
+                </td>
+            </tr>
+        `;
+            });
+        }
+
+        // ===========================
+        // Modal Tambah
+        // ===========================
+        function openAddModal() {
+            if (!pakets.length || !bahasas.length) {
+                alert('Paket / bahasa belum dimuat.');
+                return;
+            }
+
+            document.getElementById('addJudul').value = '';
+            document.getElementById('addUrlVideo').value = '';
+            document.getElementById('addTeksTeori').value = '';
+            document.getElementById('addLevel').value = 1;
+
+            fillPaketSelect(document.getElementById('addPaket'));
+            fillBahasaSelect(document.getElementById('addBahasa'));
+
+            const m = document.getElementById('addModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.add('hidden');
+        }
+
+        async function saveAdd() {
+            const id_paket = document.getElementById('addPaket').value;
+            const id_bahasa = document.getElementById('addBahasa').value;
+            let level = parseInt(document.getElementById('addLevel').value || '1', 10);
+            const judul = document.getElementById('addJudul').value.trim();
+            const url = document.getElementById('addUrlVideo').value.trim();
+            const teks = document.getElementById('addTeksTeori').value.trim();
+
+            if (!id_paket || !id_bahasa || !judul) {
+                alert('Paket, bahasa, level, dan judul wajib diisi');
+                return;
+            }
+
+            if (Number.isNaN(level)) level = 1;
+            if (level < 1 || level > 3) {
+                alert('Level harus antara 1 sampai 3');
+                return;
+            }
+
+            if (!url && !teks) {
+                alert('Isi minimal URL video atau teks teori.');
+                return;
+            }
+
+            const payload = {
+                id_paket: id_paket,
+                id_bahasa: id_bahasa,
+                level: level,
+                judul: judul,
+                url_video: url || null,
+                teks_teori: teks || null,
+            };
+
+            try {
+                await api.post('/admin/materi', payload);
+                closeAddModal();
+                await loadMateri();
+            } catch (e) {
+                console.error(e);
+                alert(e.response?.data?.message || 'Gagal menambah materi');
+            }
+        }
+
+        // ===========================
+        // Modal Edit
+        // ===========================
+        function openEditModal(index) {
+            const m = materis[index];
+            if (!m) return;
+
+            document.getElementById('editIndex').value = index;
+
+            const paketId = m.course && m.course.paket ? m.course.paket.id : null;
+            const bahasaId = m.course && m.course.bahasa ? m.course.bahasa.id : null;
+
+            fillPaketSelect(document.getElementById('editPaket'), paketId);
+            fillBahasaSelect(document.getElementById('editBahasa'), bahasaId);
+
+            document.getElementById('editLevel').value = m.level || 1;
+            document.getElementById('editJudul').value = m.judul;
+            document.getElementById('editUrlVideo').value = m.url_video || '';
+            document.getElementById('editTeksTeori').value = m.teks_teori || '';
+
+            const modal = document.getElementById('editModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        async function saveEdit() {
+            const index = document.getElementById('editIndex').value;
+            const m = materis[index];
+            if (!m) return;
+
+            const id_paket = document.getElementById('editPaket').value;
+            const id_bahasa = document.getElementById('editBahasa').value;
+            let level = parseInt(document.getElementById('editLevel').value || '1', 10);
+            const judul = document.getElementById('editJudul').value.trim();
+            const url = document.getElementById('editUrlVideo').value.trim();
+            const teks = document.getElementById('editTeksTeori').value.trim();
+
+            if (!id_paket || !id_bahasa || !judul) {
+                alert('Paket, bahasa, level, dan judul wajib diisi');
+                return;
+            }
+
+            if (Number.isNaN(level)) level = 1;
+            if (level < 1 || level > 3) {
+                alert('Level harus antara 1 sampai 3');
+                return;
+            }
+
+            if (!url && !teks) {
+                alert('Isi minimal URL video atau teks teori.');
+                return;
+            }
+
+            const payload = {
+                id_paket: id_paket,
+                id_bahasa: id_bahasa,
+                level: level,
+                judul: judul,
+                url_video: url || null,
+                teks_teori: teks || null,
+            };
+
+            try {
+                await api.put(`/admin/materi/${m.id_materi}`, payload);
+                closeEditModal();
+                await loadMateri();
+            } catch (e) {
+                console.error(e);
+                alert(e.response?.data?.message || 'Gagal mengupdate materi');
+            }
+        }
+
+        // ===========================
+        // Modal Delete
+        // ===========================
+        function openDeleteModal(index) {
+            document.getElementById('deleteIndex').value = index;
+            const m = document.getElementById('deleteModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
+
+        async function confirmDelete() {
+            const index = document.getElementById('deleteIndex').value;
+            const m = materis[index];
+            if (!m) {
+                closeDeleteModal();
+                return;
+            }
+
+            if (!confirm(`Yakin ingin menghapus materi: "${m.judul}"?`)) {
+                return;
+            }
+
+            try {
+                await api.delete(`/admin/materi/${m.id_materi}`);
+                closeDeleteModal();
+                await loadMateri();
+            } catch (e) {
+                console.error(e);
+                alert(e.response?.data?.message || 'Gagal menghapus materi');
+            }
+        }
+
+        // ===========================
+        // Init
+        // ===========================
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadPakets();
+            await loadBahasas();
+            await loadMateri();
+        });
+    </script>
+@endpush

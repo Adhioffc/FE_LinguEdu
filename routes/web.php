@@ -18,7 +18,12 @@ Route::view('/', 'home')->name('home');
 Route::view('/login', 'auth.login')->name('login.simulasi');
 
 // Register Page UI
-Route::view('/register', 'auth.register')->name('register.simulasi');
+Route::get('/register', function () {
+    $response = Http::get('http://127.0.0.1:8000/api/paket');
+    $paket = $response->json('data');
+
+    return view('auth.register', compact('paket'));
+})->name('register.simulasi');
 
 // Logout UI (sementara pakai session simulasi)
 Route::get('/logout', function () {
@@ -63,9 +68,9 @@ Route::get('/member/video/{slug}', function ($slug) {
     return view('member.dashboard.video', ['slug' => $slug]);
 })->name('member.video');
 
-Route::get('/member/teori', function () {
-    return view('member.dashboard.teori');
-})->name('member.teori');
+// Route::get('/member/teori', function () {
+//     return view('member.dashboard.teori');
+// })->name('member.teori');
 
 
 // ======== ADMIN UI ONLY (Blade) ========
@@ -82,7 +87,7 @@ Route::view('/admin/login', 'auth.loginadmin')->name('admin.login');
 // })->name('admin.login.post');
 
 Route::get('/admin/dashboard', function () {
-    return view('Admin.dashboard');
+    return view('admin.dashboard');
 })->name('admin.dashboard');
 
 
@@ -94,16 +99,52 @@ Route::get('/admin/dashboard', function () {
 //         'users' => $users
 //     ]);
 // })->name('admin.users');
+// routes/web.php
+// Route::get('/admin/users', function () {
+//     $response = Http::get('http://127.0.0.1:8000/api/admin/users');
+//     $users = $response->json();
+
+//     return view('Admin.Pages.users', compact('users'));
+// })->name('admin.users');
 Route::get('/admin/users', function () {
-
-    // Ambil data dari backend API
     $response = Http::get('http://127.0.0.1:8000/api/admin/users');
-
-    $users = $response->json();
+    $users = $response->json() ?? [];
 
     return view('Admin.Pages.users', compact('users'));
 })->name('admin.users');
+// UI Paket (Blade)
 Route::view('/admin/paket', 'Admin.Pages.paket')->name('admin.paket');
+
+// UI Bahasa (Blade) –> file: resources/views/Admin/Pages/bahasa.blade.php
+Route::view('/admin/bahasa', 'Admin.Pages.bahasa')->name('admin.bahasa');
+
 Route::view('/admin/materi', 'Admin.Pages.materi')->name('admin.materi');
 Route::view('/admin/kuis', 'Admin.Pages.kuis')->name('admin.kuis');
 Route::view('/admin/sertifikasi', 'Admin.Pages.sertifikasi')->name('admin.sertifikasi');
+Route::view('/admin/sertifikat', 'Admin.Pages.sertifikat')->name('admin.sertifikat');
+
+// Route::get('/member/kuis/{id_kuis}', function ($id_kuis) {
+//     return view('member.dashboard.kuis.show', compact('id_kuis'));
+// })->name('member.kuis.show');
+
+// // TEORI
+// Route::get('/member/teori/{slug?}', function ($slug = 'introduction-to-programming') {
+//     return view('member.dashboard.teori', compact('slug'));
+// })->name('member.teori');
+
+// // KUIS – pakai slug, bukan id_kuis
+// Route::get('/member/kuis/{slug}', function ($slug) {
+//     return view('member.dashboard.kuis.show', compact('slug'));
+// })->name('member.kuis.show');
+
+// ------ TEORI ------
+Route::get('/member/teori/{slug?}', function ($slug = 'introduction-to-programming') {
+    return view('member.dashboard.teori', compact('slug'));
+})->name('member.teori');
+
+// ------ KUIS (pakai slug) ------
+Route::get('/member/kuis/{slug}', function ($slug) {
+    return view('member.dashboard.kuis.show', compact('slug'));
+})->name('member.kuis.show');
+
+
