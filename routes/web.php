@@ -31,6 +31,15 @@ Route::get('/logout', function () {
     return redirect()->route('login.simulasi');
 })->name('logout.simulasi');
 
+//SET SESSION USER
+Route::post('/frontend-login', function (\Illuminate\Http\Request $request) {
+    session(['user' => $request->user]); // ✅ INI YANG DIPEMAKAI MIDDLEWARE
+    return response()->json(['status' => 'ok']);
+});
+
+
+
+
 /*
 |--------------------------------------------------------------------------
 | 🚫 BACKEND LOGIN SIMULASI (NANTI DIPINDAH KE CONTROLLER)
@@ -61,7 +70,28 @@ Route::prefix('member')->group(function () {
     Route::view('/materi', 'member.dashboard.materi')->name('dashboard.materi');
     Route::view('/laporan', 'member.dashboard.laporan')->name('dashboard.laporan');
     Route::view('/sertifikasi', 'member.dashboard.sertifikasi')->name('dashboard.sertifikasi');
+    Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 });
+
+// ============ EDIT PROFILE ===========
+use App\Http\Middleware\FrontendAuth;
+
+Route::middleware([FrontendAuth::class])->group(function () {
+
+    Route::view('/profile', 'profile.dashboard')->name('dashboard.profile');
+    Route::view('/profile/edit', 'profile.edit')->name('profile.edit');
+
+});
+Route::put('/profile/update', [ProfileController::class, 'update'])
+    ->name('profile.update');
+
+    Route::post('/frontend-update-session', function (\Illuminate\Http\Request $request) {
+    session(['user' => $request->all()]);
+    return response()->json(['success' => true]);
+});
+
+
+
 
 Route::view('/dashboard/video', 'member.dashboard.video')->name('dashboard.video');
 Route::get('/member/video/{slug}', function ($slug) {
