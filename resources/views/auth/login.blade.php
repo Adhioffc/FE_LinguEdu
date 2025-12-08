@@ -1,4 +1,4 @@
-@extends('member.dashboard.main') {{-- Sesuaikan dengan layout kamu --}}
+@extends('layouts.auth') {{-- Sesuaikan dengan layout kamu --}}
 @section('title', 'Login - LinguEdu')
 
 @section('content')

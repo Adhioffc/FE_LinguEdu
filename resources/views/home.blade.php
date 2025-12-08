@@ -27,7 +27,7 @@
 
         <div class="grid md:grid-cols-2 gap-6">
             <!-- Login Card -->
-            <a href="{{ route('login.simulasi') }}"
+            <a href="{{ route('login') }}"
                class="group border-2 border-blue-500 rounded-xl p-8 text-center hover:bg-blue-50 transition-all duration-300 transform hover:-translate-y-2">
                 <div class="text-5xl mb-4 text-blue-600 group-hover:scale-110 transition-transform">🔐</div>
                 <h3 class="text-xl font-bold text-blue-600 mb-2">Sudah Punya Akun?</h3>
