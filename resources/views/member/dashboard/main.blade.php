@@ -48,8 +48,7 @@
 <body class="bg-gray-50 text-gray-800 font-sans flex flex-col min-h-screen">
 
     @php
-        $user = session('user');
-        $userName = $user['name'] ?? 'User';
+        $userName = Auth::check() ? Auth::user()->name : 'Tamu';
     @endphp
 
     <header class="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-200 shadow-sm">

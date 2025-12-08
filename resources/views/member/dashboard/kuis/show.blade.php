@@ -76,10 +76,8 @@
 
     <script>
         let totalSoal = 0;
-        let idKuisSaatIni = null; // Simpan ID Kuis global
+        let idKuisSaatIni = null;
 
-        // Kita ambil ID dari sesi login Laravel.
-        // Jika user belum login, nilainya null.
         const currentUserId = {{ auth()->id() ?? 'null' }};
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -95,7 +93,7 @@
                     const data = response.data;
                     const listSoal = data.soal;
 
-                    idKuisSaatIni = data.kuis_info.id_kuis; // Simpan ID Kuis dari response
+                    idKuisSaatIni = data.kuis_info.id_kuis;
 
                     document.getElementById('judul-kuis').innerText = "Kuis: " + data.materi.judul;
                     const container = document.getElementById('daftar-soal-container');
@@ -164,13 +162,11 @@
         function submitQuiz() {
             const inputs = document.querySelectorAll('input.option-input:checked');
 
-            // 1. Cek Kelengkapan
             if(inputs.length < totalSoal) {
                 Swal.fire('Ups!', 'Jawab semua soal dulu ya!', 'warning');
                 return;
             }
 
-            // 2. Cek Login Dulu (Validasi Tambahan di Frontend)
             if (!currentUserId) {
                 Swal.fire({
                     title: 'Akses Ditolak',
@@ -179,13 +175,11 @@
                     confirmButtonText: 'Login Dulu',
                     confirmButtonColor: '#4f46e5'
                 }).then(() => {
-                    // Arahkan ke halaman login
-                    window.location.href = "{{ route('login.simulasi') }}";
+                    window.location.href = "{{ route('login') }}";
                 });
                 return;
             }
 
-            // 3. Siapkan Payload Data
             const answers = [];
             inputs.forEach(input => {
                 const idSoal = input.name.replace('q', '');
@@ -200,7 +194,6 @@
                 answers: answers
             };
 
-            // 4. Tampilkan Loading
             Swal.fire({
                 title: 'Sedang Mengirim...',
                 text: 'Mohon tunggu sebentar',
@@ -208,7 +201,6 @@
                 didOpen: () => Swal.showLoading()
             });
 
-            // 5. Kirim ke API Backend
             fetch(`http://127.0.0.1:8000/api/kuis/${idKuisSaatIni}/submit`, {
                 method: 'POST',
                 headers: {
@@ -221,10 +213,9 @@
             .then(response => {
                 if(response.error) throw new Error(response.error);
 
-                // 5. Tampilkan Hasil dari Server
                 const data = response.data;
                 const skor = data.skor;
-                const status = data.status; // Lulus / Tidak Lulus
+                const status = data.status;
 
                 let icon = skor >= 60 ? 'success' : 'error';
                 let pesan = skor >= 60 ? 'Selamat! Kamu Lulus 🎉' : 'Jangan menyerah, coba lagi! 💪';
@@ -237,11 +228,11 @@
                         <p class="text-sm text-gray-500 mt-2">Benar ${data.benar} dari ${data.total} soal</p>
                     `,
                     icon: icon,
-                    confirmButtonText: 'Kembali ke Materi',
+                    confirmButtonText: 'Kembali ke Materi', // Teks tombol sudah benar
                     confirmButtonColor: '#4f46e5'
                 }).then(() => {
-                    const slug = "{{ $slug }}";
-                    window.location.href = `/member/teori/${slug}`;
+                    // ✅ REVISI DISINI: Balik ke Dashboard Materi
+                    window.location.href = "{{ route('dashboard.materi') }}";
                 });
             })
             .catch(err => {

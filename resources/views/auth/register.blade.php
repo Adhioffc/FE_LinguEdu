@@ -244,7 +244,7 @@
                         <button id="editData" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
                             ✏️ Edit Data
                         </button>
-                        <a href="{{ route('login.simulasi') }}"
+                        <a href="{{ route('login.perform') }}"
                             class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow">
                             ➡ Ke Halaman Login
                         </a>
