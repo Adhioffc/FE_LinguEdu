@@ -109,7 +109,6 @@ Route::get('/admin/dashboard', function () {
 Route::get('/admin/users', function () {
     $response = Http::get('http://127.0.0.1:8000/api/admin/users');
     $users = $response->json() ?? [];
-
     return view('Admin.Pages.users', compact('users'));
 })->name('admin.users');
 // UI Paket (Blade)
