@@ -1,8 +1,9 @@
 <?php
-
-use Illuminate\Support\Facades\Route;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 // 👇 Tambahan Import untuk fitur Adhi
@@ -18,24 +19,44 @@ Route::view('/', 'home')->name('home');
 // 1. Halaman Login (UI)
 Route::view('/login', 'auth.login')->name('login');
 
-// 2. Proses Login (POST)
 Route::post('/login', function (Request $request) {
-    $credentials = $request->validate([
+    // Validasi form
+    $request->validate([
         'email' => ['required', 'email'],
         'password' => ['required'],
     ]);
 
-    if (Auth::attempt($credentials)) {
-        $request->session()->regenerate();
-        if (Auth::user()->role === 'admin') {
-             return redirect()->route('admin.dashboard');
-        }
-        return redirect()->route('dashboard.index');
+    // Normalisasi email ke lowercase
+    $email = strtolower($request->input('email'));
+    $password = $request->input('password');
+
+    // Cari user berdasarkan email (case-insensitive untuk jaga-jaga)
+    $user = User::whereRaw('LOWER(email) = ?', [$email])->first();
+
+    // Cek user & password
+    if (!$user || !Hash::check($password, $user->password)) {
+        return back()
+            ->withErrors(['email' => 'Email atau password salah.'])
+            ->withInput();
     }
 
-    return back()->withErrors([
-        'email' => 'Email atau password salah.',
-    ]);
+    // (Opsional) kalau mau blokir member yang belum aktif, taruh di sini
+    // if ($user->role === 'member' && is_null($user->email_verified_at)) {
+    //     return back()
+    //         ->withErrors(['email' => 'Akun Anda belum aktif. Silakan hubungi admin.'])
+    //         ->withInput();
+    // }
+
+    // Login manual
+    Auth::login($user);
+    $request->session()->regenerate();
+
+    // Redirect berdasarkan role
+    if ($user->role === 'admin') {
+        return redirect()->route('admin.dashboard');
+    }
+
+    return redirect()->route('dashboard.index');
 })->name('login.perform');
 
 // Halaman Register
@@ -67,20 +88,20 @@ Route::prefix('member')->middleware('auth')->group(function () {
         $materiLevel1 = $semuaMateri->where('level', 1)->map(function ($item) {
             return [
                 'title' => $item['judul'],
-                'desc'  => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Belajar via Video',
-                'img'   => 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80',
+                'desc' => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Belajar via Video',
+                'img' => 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80',
                 'progress' => 0,
-                'slug'  => Str::slug($item['judul'], '-')
+                'slug' => Str::slug($item['judul'], '-')
             ];
         });
 
         $materiLevel2 = $semuaMateri->where('level', 2)->map(function ($item) {
             return [
                 'title' => $item['judul'],
-                'desc'  => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Materi Lanjutan',
-                'img'   => 'https://images.unsplash.com/photo-1593642634367-d91a135587b5?auto=format&fit=crop&w=800&q=80',
+                'desc' => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Materi Lanjutan',
+                'img' => 'https://images.unsplash.com/photo-1593642634367-d91a135587b5?auto=format&fit=crop&w=800&q=80',
                 'progress' => 0,
-                'slug'  => Str::slug($item['judul'], '-')
+                'slug' => Str::slug($item['judul'], '-')
             ];
         });
 
@@ -131,14 +152,14 @@ Route::prefix('member')->middleware('auth')->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::view('/profile', 'profile.dashboard')->name('dashboard.profile');
     Route::view('/profile/edit', 'profile.edit')->name('profile.edit');
-    Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+    // Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 });
 
-// Route Session Tambahan Adhi (Kita simpan jaga-jaga)
-Route::post('/frontend-login', function (Request $request) {
-    session(['user' => $request->user]);
-    return response()->json(['status' => 'ok']);
-});
+// // Route Session Tambahan Adhi (Kita simpan jaga-jaga)
+// Route::post('/frontend-login', function (Request $request) {
+//     session(['user' => $request->user]);
+//     return response()->json(['status' => 'ok']);
+// });
 
 Route::post('/frontend-update-session', function (Request $request) {
     session(['user' => $request->all()]);
