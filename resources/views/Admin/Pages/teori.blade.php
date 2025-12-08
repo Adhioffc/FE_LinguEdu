@@ -1,328 +1,377 @@
 @extends('layouts.admin')
 
-@section('title', 'Manajemen Teori Materi')
+@section('title', 'Manajemen Teori')
 
 @section('content')
+    {{-- DataTables + Bootstrap Icons CSS --}}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
     <div class="container py-5">
-        <a href="/admin/dashboard" class="text-primary d-block mb-3">
-            ← Kembali ke Dashboard
-        </a>
 
-        <h2 class="fw-bold mb-2">📘 Manajemen Teori Materi</h2>
-        <p class="text-muted mb-4">
-            Kelola konten teori (overview, kenapa penting, konsep dasar, contoh, ringkasan) per materi.
-        </p>
+        {{-- HEADER --}}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-1">📘 Manajemen Teori</h2>
+                <p class="text-muted mb-0">
+                    Kelola konten teori untuk setiap materi pembelajaran.
+                </p>
+            </div>
+            <button class="btn btn-primary px-4" id="btnAddTeori">
+                + Tambah Teori
+            </button>
+        </div>
 
-        {{-- FILTER ATAS: PAKET / BAHASA / LEVEL / MATERI --}}
-        <div class="card mb-4">
-            <div class="card-body">
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-3">
-                        <label class="fw-semibold">Paket</label>
-                        <select id="selectPaket" class="form-select">
-                            <option value="">-- Pilih Paket --</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="fw-semibold">Bahasa</label>
-                        <select id="selectBahasa" class="form-select">
-                            <option value="">-- Pilih Bahasa --</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="fw-semibold">Level</label>
-                        <select id="selectLevel" class="form-select">
-                            <option value="">Semua</option>
-                            <option value="1">Level 1</option>
-                            <option value="2">Level 2</option>
-                            <option value="3">Level 3</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="fw-semibold">Materi</label>
-                        <select id="selectMateri" class="form-select">
-                            <option value="">-- Pilih Paket + Bahasa (+ Level) dulu --</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="mt-3">
-                    <small class="text-muted">
-                        Sistem akan mencari materi berdasarkan kombinasi Paket + Bahasa + Level.
-                    </small>
-                </div>
+        {{-- CARD TABEL --}}
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-0">
+                <table class="table align-middle mb-0" id="teoriDataTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 28%">Judul Materi</th>
+                            <th style="width: 25%">Kursus</th>
+                            <th style="width: 7%">Level</th>
+                            <th style="width: 30%">Overview</th>
+                            <th style="width: 10%" class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teoriTable">
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                Memuat data teori...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        {{-- FORM TEORI --}}
-        <div class="card">
-            <div class="card-body">
-                <h5 class="fw-semibold mb-3">Konten Teori</h5>
-                <p class="text-muted small mb-4">
-                    Pilih materi terlebih dahulu, lalu isi konten di bawah. Data akan tampil di halaman teori member.
-                </p>
+    </div>
 
-                <input type="hidden" id="currentTeoriId">
+    {{-- MODAL CREATE / EDIT TEORI --}}
+    <div class="modal fade" id="modalTeori" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <form id="formTeori">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTeoriTitle">Tambah Teori</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
 
-                <div class="mb-3">
-                    <label class="fw-semibold">Overview</label>
-                    <textarea id="teoriOverview" class="form-control" rows="3" placeholder="Gambaran umum materi..."></textarea>
-                </div>
+                        <input type="hidden" id="teoriId">
 
-                <div class="mb-3">
-                    <label class="fw-semibold">Kenapa Penting?</label>
-                    <textarea id="teoriKenapa" class="form-control" rows="3"
-                        placeholder="Kenapa materi ini penting dipelajari? (boleh pakai bullet: satu poin per baris)"></textarea>
-                </div>
+                        {{-- PILIH MATERI --}}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Materi</label>
+                            <select id="selectMateri" class="form-select" required>
+                                <option value="">-- Pilih Materi --</option>
+                            </select>
+                            <small class="text-muted">
+                                Teori akan terhubung ke materi ini.
+                            </small>
+                        </div>
 
-                <div class="mb-3">
-                    <label class="fw-semibold">Konsep Dasar</label>
-                    <textarea id="teoriKonsep" class="form-control" rows="3"
-                        placeholder="Konsep dasar utama (satu poin per baris, misal: 1. Variabel ... )"></textarea>
-                </div>
+                        <hr>
 
-                <div class="mb-3">
-                    <label class="fw-semibold">Contoh Praktik (Kode / Kasus)</label>
-                    <textarea id="teoriContoh" class="form-control" rows="3" placeholder="Contoh praktis, bisa berupa potongan kode."></textarea>
-                </div>
+                        {{-- OVERVIEW --}}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Overview</label>
+                            <textarea id="inputOverview" class="form-control" rows="3" placeholder="Ringkasan singkat tentang materi ini"></textarea>
+                        </div>
 
-                <div class="mb-3">
-                    <label class="fw-semibold">Ringkasan</label>
-                    <textarea id="teoriRingkasan" class="form-control" rows="3" placeholder="Ringkasan poin-poin penting."></textarea>
-                </div>
+                        {{-- KENAPA PENTING --}}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Kenapa Penting?</label>
+                            <textarea id="inputKenapa" class="form-control" rows="3"
+                                placeholder="Poin-poin kenapa topik ini penting (boleh pakai bullet dengan enter)"></textarea>
+                        </div>
 
-                <div class="d-flex justify-content-between mt-4">
-                    <button class="btn btn-outline-danger" id="btnDeleteTeori" disabled>
-                        Hapus Teori
-                    </button>
-                    <button class="btn btn-primary" id="btnSaveTeori" disabled>
-                        Simpan Teori
-                    </button>
-                </div>
+                        {{-- KONSEP DASAR --}}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Konsep Dasar</label>
+                            <textarea id="inputKonsep" class="form-control" rows="3" placeholder="Daftar konsep dasar. Misal: 1. ..., 2. ..."></textarea>
+                        </div>
+
+                        {{-- CONTOH PRAKTIK --}}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Contoh Praktik / Kode</label>
+                            <textarea id="inputContoh" class="form-control font-monospace" rows="3"
+                                placeholder="Contoh kode atau ilustrasi praktis"></textarea>
+                        </div>
+
+                        {{-- RINGKASAN --}}
+                        <div class="mb-1">
+                            <label class="form-label fw-semibold">Ringkasan</label>
+                            <textarea id="inputRingkasan" class="form-control" rows="3" placeholder="Ringkasan akhir untuk menutup materi"></textarea>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            Batal
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="btnSaveTeori">
+                            Simpan
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 @endsection
 
 @push('scripts')
+    {{-- Axios + jQuery + DataTables --}}
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+
     <script>
         const api = axios.create({
             baseURL: 'http://127.0.0.1:8000/api',
             headers: {
                 Accept: 'application/json'
-            },
+            }
         });
 
-        let pakets = [];
-        let bahasas = [];
-        let materis = [];
-        let currentTeori = null; // {id_teori, ...}
+        let listTeori = [];
+        let listMateri = [];
+        let teoriModal = null;
+        let dt = null; // instance DataTable
 
-        const selectPaket = document.getElementById('selectPaket');
-        const selectBahasa = document.getElementById('selectBahasa');
-        const selectLevel = document.getElementById('selectLevel');
+        const teoriTable = document.getElementById('teoriTable');
+        const btnAddTeori = document.getElementById('btnAddTeori');
+
         const selectMateri = document.getElementById('selectMateri');
+        const inputOverview = document.getElementById('inputOverview');
+        const inputKenapa = document.getElementById('inputKenapa');
+        const inputKonsep = document.getElementById('inputKonsep');
+        const inputContoh = document.getElementById('inputContoh');
+        const inputRingkasan = document.getElementById('inputRingkasan');
+        const inputTeoriId = document.getElementById('teoriId');
+        const modalTitle = document.getElementById('modalTeoriTitle');
 
-        const teoriOverview = document.getElementById('teoriOverview');
-        const teoriKenapa = document.getElementById('teoriKenapa');
-        const teoriKonsep = document.getElementById('teoriKonsep');
-        const teoriContoh = document.getElementById('teoriContoh');
-        const teoriRingkasan = document.getElementById('teoriRingkasan');
-
-        const btnSaveTeori = document.getElementById('btnSaveTeori');
-        const btnDeleteTeori = document.getElementById('btnDeleteTeori');
-
-        /* ========== LOAD MASTER DATA ========== */
-
-        async function loadPakets() {
-            try {
-                const res = await api.get('/paket');
-                pakets = Array.isArray(res.data.data) ? res.data.data : res.data;
-                selectPaket.innerHTML = '<option value="">-- Pilih Paket --</option>';
-                pakets.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.id;
-                    opt.textContent = p.nama_paket || ('Paket #' + p.id);
-                    selectPaket.appendChild(opt);
-                });
-            } catch (e) {
-                console.error(e);
-                alert('Gagal memuat paket');
-            }
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, function(m) {
+                return ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;',
+                })[m];
+            });
         }
 
-        async function loadBahasas() {
-            try {
-                const res = await api.get('/bahasa');
-                bahasas = Array.isArray(res.data.data) ? res.data.data : res.data;
-                selectBahasa.innerHTML = '<option value="">-- Pilih Bahasa --</option>';
-                bahasas.forEach(b => {
-                    const opt = document.createElement('option');
-                    opt.value = b.id;
-                    opt.textContent = b.nama_bahasa || ('Bahasa #' + b.id);
-                    selectBahasa.appendChild(opt);
-                });
-            } catch (e) {
-                console.error(e);
-                alert('Gagal memuat bahasa');
-            }
+        function truncate(str, max = 80) {
+            if (!str) return '';
+            return str.length > max ? str.slice(0, max) + '…' : str;
         }
 
-        async function loadMateris() {
-            const idPaket = selectPaket.value;
-            const idBahasa = selectBahasa.value;
-            const level = selectLevel.value;
-
-            resetForm();
-            selectMateri.innerHTML = '<option value="">-- Pilih Paket + Bahasa (+ Level) dulu --</option>';
-
-            if (!idPaket || !idBahasa) {
-                btnSaveTeori.disabled = true;
-                btnDeleteTeori.disabled = true;
-                return;
-            }
-
+        async function loadMateriOptions() {
             try {
-                const params = {
-                    paket: idPaket,
-                    bahasa: idBahasa
-                };
-                if (level) params.level = level;
-
-                const res = await api.get('/admin/materi/filter', {
-                    params
-                });
-                materis = Array.isArray(res.data.data) ? res.data.data : res.data;
-
-                if (!materis.length) {
-                    selectMateri.innerHTML = '<option value="">-- Tidak ada materi untuk filter ini --</option>';
-                    return;
-                }
+                const res = await api.get('/admin/materi');
+                listMateri = Array.isArray(res.data.data) ? res.data.data : (res.data || []);
 
                 selectMateri.innerHTML = '<option value="">-- Pilih Materi --</option>';
-                materis.forEach(m => {
+
+                listMateri.forEach(m => {
+                    const bahasa = m.course?.bahasa?.nama_bahasa || 'Bahasa ?';
+                    const paket = m.course?.paket?.nama_paket || 'Paket ?';
+                    const text = `${m.judul || 'Materi'} — Level ${m.level ?? '-'} (${bahasa} - ${paket})`;
+
                     const opt = document.createElement('option');
                     opt.value = m.id_materi;
-                    opt.textContent = `Level ${m.level} - ${m.judul}`;
+                    opt.textContent = text;
                     selectMateri.appendChild(opt);
                 });
             } catch (e) {
                 console.error(e);
-                alert('Gagal memuat materi');
+                alert('Gagal memuat daftar materi');
             }
         }
 
-        /* ========== LOAD TEORI PER MATERI ========== */
+        async function loadTeori() {
+            try {
+                teoriTable.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            Memuat data teori...
+                        </td>
+                    </tr>`;
 
-        async function loadTeoriForMateri() {
-            resetForm();
+                const res = await api.get('/admin/teori');
+                listTeori = Array.isArray(res.data.data) ? res.data.data : (res.data || []);
 
-            const idMateri = selectMateri.value;
-            if (!idMateri) {
-                btnSaveTeori.disabled = true;
-                btnDeleteTeori.disabled = true;
-                return;
+                renderTable();
+            } catch (e) {
+                console.error(e);
+                teoriTable.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-danger py-4">
+                            Gagal memuat data teori.
+                        </td>
+                    </tr>`;
+            }
+        }
+
+        function renderTable() {
+            // hancurkan DataTable lama kalau sudah ada
+            if (dt) {
+                dt.destroy();
+                dt = null;
             }
 
-            btnSaveTeori.disabled = false;
+            if (!listTeori.length) {
+                teoriTable.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            Belum ada data teori. Klik <strong>Tambah Teori</strong> untuk membuat.
+                        </td>
+                    </tr>`;
+            } else {
+                teoriTable.innerHTML = '';
+
+                listTeori.forEach(t => {
+                    const materi = t.materi || {};
+                    const course = materi.course || {};
+                    const bahasa = course.bahasa?.nama_bahasa || '-';
+                    const paket = course.paket?.nama_paket || '-';
+
+                    const kursusText = `${bahasa} - ${paket}`;
+                    const levelText = materi.level ? `Level ${materi.level}` : '-';
+
+                    const row = document.createElement('tr');
+
+                    row.innerHTML = `
+                        <td class="fw-semibold">${escapeHtml(materi.judul || '-')}</td>
+                        <td>${escapeHtml(kursusText)}</td>
+                        <td class="fw-semibold">${escapeHtml(levelText)}</td>
+                        <td class="text-muted small">
+                            ${escapeHtml(truncate(t.overview || t.ringkasan || ''))}
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary me-1"
+                                    onclick="editTeori(${t.id})">
+                                <i class="bi bi-pencil-fill me-1"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger"
+                                    onclick="deleteTeori(${t.id})">
+                                <i class="bi bi-trash-fill me-1"></i>
+                            </button>
+                        </td>
+                    `;
+
+                    teoriTable.appendChild(row);
+                });
+            }
+
+            // inisialisasi / re-inisialisasi DataTable
+            dt = $('#teoriDataTable').DataTable({
+                pageLength: 10,
+                lengthChange: false,
+                language: {
+                    search: "Cari:",
+                    zeroRecords: "Data tidak ditemukan",
+                    info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+                    infoEmpty: "Belum ada data",
+                    paginate: {
+                        first: "Pertama",
+                        last: "Terakhir",
+                        next: "›",
+                        previous: "‹"
+                    }
+                }
+            });
+        }
+
+        function openCreateModal() {
+            modalTitle.textContent = 'Tambah Teori';
+            inputTeoriId.value = '';
+            selectMateri.value = '';
+            inputOverview.value = '';
+            inputKenapa.value = '';
+            inputKonsep.value = '';
+            inputContoh.value = '';
+            inputRingkasan.value = '';
+
+            teoriModal.show();
+        }
+
+        window.editTeori = function(id) {
+            const t = listTeori.find(x => String(x.id) === String(id));
+            if (!t) return;
+
+            modalTitle.textContent = 'Edit Teori';
+            inputTeoriId.value = t.id;
+            selectMateri.value = t.id_materi ?? '';
+
+            inputOverview.value = t.overview || '';
+            inputKenapa.value = t.kenapa_penting || '';
+            inputKonsep.value = t.konsep_dasar || '';
+            inputContoh.value = t.contoh_praktik || '';
+            inputRingkasan.value = t.ringkasan || '';
+
+            teoriModal.show();
+        };
+
+        window.deleteTeori = async function(id) {
+            if (!confirm('Yakin ingin menghapus teori ini?')) return;
 
             try {
-                const res = await api.get(`/admin/teori/by-materi/${idMateri}`);
-                currentTeori = res.data.data;
-
-                teoriOverview.value = currentTeori.overview ?? '';
-                teoriKenapa.value = currentTeori.kenapa_penting ?? '';
-                teoriKonsep.value = currentTeori.konsep_dasar ?? '';
-                teoriContoh.value = currentTeori.contoh_praktik ?? '';
-                teoriRingkasan.value = currentTeori.ringkasan ?? '';
-
-                btnDeleteTeori.disabled = false;
+                await api.delete(`/admin/teori/${id}`);
+                listTeori = listTeori.filter(t => String(t.id) !== String(id));
+                renderTable();
             } catch (e) {
-                currentTeori = null;
-                // 404 = belum ada teori → form dibiarkan kosong untuk create
-                btnDeleteTeori.disabled = true;
-                if (e.response && e.response.status !== 404) {
-                    console.error(e);
-                    alert('Gagal memuat teori');
-                }
+                console.error(e);
+                alert(e.response?.data?.message || 'Gagal menghapus teori');
             }
-        }
+        };
 
-        function resetForm() {
-            currentTeori = null;
-            teoriOverview.value = '';
-            teoriKenapa.value = '';
-            teoriKonsep.value = '';
-            teoriContoh.value = '';
-            teoriRingkasan.value = '';
-            btnSaveTeori.disabled = true;
-            btnDeleteTeori.disabled = true;
-        }
-
-        /* ========== SIMPAN (CREATE/UPDATE) ========== */
-
-        btnSaveTeori.addEventListener('click', async () => {
-            const idMateri = selectMateri.value;
-            if (!idMateri) {
-                alert('Pilih materi dulu.');
-                return;
-            }
+        document.getElementById('formTeori').addEventListener('submit', async function(e) {
+            e.preventDefault();
 
             const payload = {
-                overview: teoriOverview.value,
-                kenapa_penting: teoriKenapa.value,
-                konsep_dasar: teoriKonsep.value,
-                contoh_praktik: teoriContoh.value,
-                ringkasan: teoriRingkasan.value,
+                id_materi: selectMateri.value,
+                overview: inputOverview.value || null,
+                kenapa_penting: inputKenapa.value || null,
+                konsep_dasar: inputKonsep.value || null,
+                contoh_praktik: inputContoh.value || null,
+                ringkasan: inputRingkasan.value || null,
             };
 
+            if (!payload.id_materi) {
+                alert('Pilih materi terlebih dahulu.');
+                return;
+            }
+
             try {
-                if (!currentTeori) {
-                    // CREATE
-                    await api.post('/admin/teori', {
-                        id_materi: idMateri,
-                        ...payload,
-                    });
+                const id = inputTeoriId.value;
+
+                if (id) {
+                    await api.put(`/admin/teori/${id}`, payload); // UPDATE
                 } else {
-                    // UPDATE
-                    await api.put(`/admin/teori/${currentTeori.id_teori}`, payload);
+                    await api.post('/admin/teori', payload); // CREATE
                 }
 
-                alert('Teori berhasil disimpan.');
-                await loadTeoriForMateri();
+                teoriModal.hide();
+                await loadTeori();
             } catch (e) {
                 console.error(e);
                 alert(e.response?.data?.message || 'Gagal menyimpan teori');
             }
         });
 
-        /* ========== HAPUS ========== */
-
-        btnDeleteTeori.addEventListener('click', async () => {
-            if (!currentTeori) return;
-            if (!confirm('Yakin ingin menghapus teori untuk materi ini?')) return;
-
-            try {
-                await api.delete(`/admin/teori/${currentTeori.id_teori}`);
-                alert('Teori berhasil dihapus.');
-                resetForm();
-            } catch (e) {
-                console.error(e);
-                alert(e.response?.data?.message || 'Gagal menghapus teori');
-            }
-        });
-
-        /* ========== EVENT LISTENER FILTER ========== */
-
-        selectPaket.addEventListener('change', loadMateris);
-        selectBahasa.addEventListener('change', loadMateris);
-        selectLevel.addEventListener('change', loadMateris);
-        selectMateri.addEventListener('change', loadTeoriForMateri);
-
-        /* ========== INIT ========== */
         document.addEventListener('DOMContentLoaded', async () => {
-            await loadPakets();
-            await loadBahasas();
+            teoriModal = new bootstrap.Modal(document.getElementById('modalTeori'));
+
+            await loadMateriOptions();
+            await loadTeori();
+
+            btnAddTeori.addEventListener('click', openCreateModal);
         });
     </script>
 @endpush
