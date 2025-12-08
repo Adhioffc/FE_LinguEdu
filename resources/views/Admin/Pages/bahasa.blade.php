@@ -12,7 +12,13 @@
                 class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 shadow text-sm font-semibold">
                 + Tambah Bahasa
             </button>
+            <button onclick="showPage('list')"
+                class="mt-4 bg-gray-400 px-4 py-2 text-white rounded-lg hover:bg-gray-500 transition">
+                Kembali
+            </button>
         </div>
+
+
 
         {{-- TABEL --}}
         <div class="bg-white shadow rounded-lg overflow-hidden">
@@ -30,33 +36,27 @@
     </div>
 
     {{-- ================= MODAL TAMBAH ================= --}}
-    <div id="addModal"
-        class="fixed inset-0 bg-black bg-opacity-40 hidden justify-center items-center z-50">
+    <div id="addModal" class="fixed inset-0 bg-black bg-opacity-40 hidden justify-center items-center z-50">
         <div class="bg-white w-11/12 md:w-1/2 rounded-xl p-6 shadow-lg">
             <h2 class="text-2xl font-semibold mb-4 text-gray-800">Tambah Bahasa</h2>
 
             <div class="mb-4">
                 <label class="font-semibold text-sm text-gray-700">Nama Bahasa</label>
-                <input id="addNama" type="text"
-                    class="w-full border p-2 rounded-lg mt-1 text-sm"
+                <input id="addNama" type="text" class="w-full border p-2 rounded-lg mt-1 text-sm"
                     placeholder="Contoh: Inggris">
             </div>
 
             <div class="mb-4">
                 <label class="font-semibold text-sm text-gray-700">Deskripsi</label>
-                <textarea id="addDesc"
-                    class="w-full border p-2 rounded-lg mt-1 text-sm"
-                    rows="3"
+                <textarea id="addDesc" class="w-full border p-2 rounded-lg mt-1 text-sm" rows="3"
                     placeholder="Contoh: Bahasa Inggris untuk kebutuhan umum, bisnis, dst."></textarea>
             </div>
 
             <div class="flex justify-end mt-6">
-                <button onclick="closeAddModal()"
-                    class="px-4 py-2 bg-gray-300 rounded mr-2 text-sm font-semibold">
+                <button onclick="closeAddModal()" class="px-4 py-2 bg-gray-300 rounded mr-2 text-sm font-semibold">
                     Batal
                 </button>
-                <button onclick="saveAdd()"
-                    class="px-4 py-2 bg-blue-600 text-white rounded text-sm font-semibold">
+                <button onclick="saveAdd()" class="px-4 py-2 bg-blue-600 text-white rounded text-sm font-semibold">
                     Simpan
                 </button>
             </div>
@@ -64,8 +64,7 @@
     </div>
 
     {{-- ================= MODAL EDIT ================= --}}
-    <div id="editModal"
-        class="fixed inset-0 bg-black bg-opacity-40 hidden justify-center items-center z-50">
+    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-40 hidden justify-center items-center z-50">
         <div class="bg-white w-11/12 md:w-1/2 rounded-xl p-6 shadow-lg">
             <h2 class="text-2xl font-semibold mb-4 text-gray-800">Edit Bahasa</h2>
 
@@ -73,24 +72,19 @@
 
             <div class="mb-4">
                 <label class="font-semibold text-sm text-gray-700">Nama Bahasa</label>
-                <input id="editNama" type="text"
-                    class="w-full border p-2 rounded-lg mt-1 text-sm">
+                <input id="editNama" type="text" class="w-full border p-2 rounded-lg mt-1 text-sm">
             </div>
 
             <div class="mb-4">
                 <label class="font-semibold text-sm text-gray-700">Deskripsi</label>
-                <textarea id="editDesc"
-                    class="w-full border p-2 rounded-lg mt-1 text-sm"
-                    rows="3"></textarea>
+                <textarea id="editDesc" class="w-full border p-2 rounded-lg mt-1 text-sm" rows="3"></textarea>
             </div>
 
             <div class="flex justify-end mt-6">
-                <button onclick="closeEditModal()"
-                    class="px-4 py-2 bg-gray-300 rounded mr-2 text-sm font-semibold">
+                <button onclick="closeEditModal()" class="px-4 py-2 bg-gray-300 rounded mr-2 text-sm font-semibold">
                     Batal
                 </button>
-                <button onclick="saveEdit()"
-                    class="px-4 py-2 bg-yellow-500 text-white rounded text-sm font-semibold">
+                <button onclick="saveEdit()" class="px-4 py-2 bg-yellow-500 text-white rounded text-sm font-semibold">
                     Update
                 </button>
             </div>
@@ -98,8 +92,7 @@
     </div>
 
     {{-- ================= MODAL DELETE ================= --}}
-    <div id="deleteModal"
-        class="fixed inset-0 bg-black bg-opacity-40 hidden justify-center items-center z-50">
+    <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-40 hidden justify-center items-center z-50">
         <div class="bg-white w-96 rounded-xl p-6 shadow-lg text-center">
             <h2 class="text-xl font-semibold mb-2 text-gray-800">Hapus Bahasa Ini?</h2>
             <p class="text-sm text-gray-600 mb-4">
@@ -109,12 +102,10 @@
             <input type="hidden" id="deleteIndex">
 
             <div class="flex justify-center mt-2">
-                <button onclick="closeDeleteModal()"
-                    class="px-4 py-2 bg-gray-300 rounded mr-2 text-sm font-semibold">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-300 rounded mr-2 text-sm font-semibold">
                     Batal
                 </button>
-                <button onclick="confirmDelete()"
-                    class="px-4 py-2 bg-red-600 text-white rounded text-sm font-semibold">
+                <button onclick="confirmDelete()" class="px-4 py-2 bg-red-600 text-white rounded text-sm font-semibold">
                     Hapus
                 </button>
             </div>
@@ -127,7 +118,9 @@
     <script>
         const api = axios.create({
             baseURL: 'http://127.0.0.1:8000/api',
-            headers: { Accept: 'application/json' },
+            headers: {
+                Accept: 'application/json'
+            },
         });
 
         let bahasas = [];
