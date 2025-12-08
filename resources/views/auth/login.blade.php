@@ -7,10 +7,7 @@
             <h1 class="text-3xl font-bold text-center text-gray-900 mb-2">Login LinguEdu</h1>
             <p class="text-center text-gray-500 mb-8">Silakan masuk untuk mulai belajar.</p>
 
-            {{--
-                PERUBAHAN 1: Menampilkan Error dari Laravel (web.php)
-                Jika login gagal, pesan error muncul di sini.
-            --}}
+            {{-- Tampilkan Error jika Login Gagal --}}
             @if ($errors->any())
                 <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
                     <strong class="font-bold">Oops!</strong>
@@ -18,10 +15,7 @@
                 </div>
             @endif
 
-            {{--
-                PERUBAHAN 2: Form Mengarah ke Route Frontend (login.perform)
-                Bukan pakai Axios/Javascript lagi. Biar Server Frontend yang urus.
-            --}}
+            {{-- Form Login Murni Laravel --}}
             <form action="{{ route('login.perform') }}" method="POST">
                 @csrf
 
@@ -50,8 +44,3 @@
         </div>
     </div>
 @endsection
-
-{{--
-    PERUBAHAN 3: Hapus Script Axios
-    Kita tidak butuh script JS lagi karena form sudah di-handle oleh Laravel langsung.
---}}

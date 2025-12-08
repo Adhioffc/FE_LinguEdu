@@ -5,12 +5,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+// 👇 Tambahan Import untuk fitur Adhi
+use App\Http\Controllers\ProfileController;
+use App\Http\Middleware\FrontendAuth;
 
 // ================= FRONTEND ROUTES =================
 
 Route::view('/', 'home')->name('home');
 
-// ======== AUTH ========
+// ======== AUTH (Versi Dex - Teruji) ========
 
 // 1. Halaman Login (UI)
 Route::view('/login', 'auth.login')->name('login');
@@ -35,7 +38,6 @@ Route::post('/login', function (Request $request) {
     ]);
 })->name('login.perform');
 
-
 // Halaman Register
 Route::get('/register', function () {
     $response = Http::get('http://127.0.0.1:8000/api/paket');
@@ -48,11 +50,11 @@ Route::get('/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();
     $request->session()->regenerateToken();
-    return redirect()->route('login.simulasi');
+    return redirect()->route('login');
 })->name('logout.simulasi');
 
 
-// ======== MEMBER PAGES (DASHBOARD & MATERI) ========
+// ======== MEMBER PAGES (Materi & Video - Versi Dex API) ========
 Route::prefix('member')->middleware('auth')->group(function () {
 
     Route::view('/dashboard', 'member.dashboard.index')->name('dashboard.index');
@@ -101,7 +103,7 @@ Route::prefix('member')->middleware('auth')->group(function () {
         return view('member.dashboard.kuis.show', ['slug' => $slug]);
     })->name('member.kuis.show');
 
-    // ✅ Route Video (VERSI BENAR - CUMA SATU AJA)
+    // ✅ Route Video (VERSI BENAR - API FETCH)
     Route::get('/video/{slug}', function ($slug) {
         // 1. Tembak API Backend
         $response = Http::get("http://127.0.0.1:8000/api/materi/{$slug}");
@@ -120,6 +122,27 @@ Route::prefix('member')->middleware('auth')->group(function () {
             'materi' => $materi
         ]);
     })->name('member.video');
+});
+
+
+// ======== PROFILE ROUTES (Fitur Adhi) ========
+// Kita bungkus pakai middleware FrontendAuth sesuai kode Adhi
+// Note: Pastikan class FrontendAuth sudah ada, kalau error bisa dihapus middleware-nya sementara
+Route::middleware(['auth'])->group(function () {
+    Route::view('/profile', 'profile.dashboard')->name('dashboard.profile');
+    Route::view('/profile/edit', 'profile.edit')->name('profile.edit');
+    Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+});
+
+// Route Session Tambahan Adhi (Kita simpan jaga-jaga)
+Route::post('/frontend-login', function (Request $request) {
+    session(['user' => $request->user]);
+    return response()->json(['status' => 'ok']);
+});
+
+Route::post('/frontend-update-session', function (Request $request) {
+    session(['user' => $request->all()]);
+    return response()->json(['success' => true]);
 });
 
 

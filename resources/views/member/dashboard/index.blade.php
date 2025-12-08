@@ -4,6 +4,7 @@
 @section('content')
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
+
 <style>
     body {
         background: linear-gradient(135deg, #eef2ff, #ffffff, #dbeafe);
@@ -85,6 +86,7 @@
         opacity: 0.9;
         transform: scale(1.04);
     }
+
 </style>
 
 <div class="d-flex flex-column flex-md-row min-vh-100">

@@ -9,7 +9,8 @@
 
 @section('content')
     @php
-        $slug = $slug ?? (request()->route('slug') ?? 'introduction-to-programming');
+        // slug dikirim dari route /member/teori/{slug?}
+        $slug = $slug ?? request()->route('slug') ?? 'introduction-to-programming';
         $title = ucwords(str_replace('-', ' ', $slug));
         $quizUrl = route('member.kuis.show', ['slug' => $slug]);
     @endphp
