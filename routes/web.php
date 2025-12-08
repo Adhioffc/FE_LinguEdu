@@ -1,150 +1,144 @@
 <?php
 
-use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
-use SebastianBergmann\Environment\Console;
+use Illuminate\Support\Str;
 
-// ================= FRONTEND ROUTES (DEDICATED UI ONLY) =================
+// ================= FRONTEND ROUTES =================
 
-// Halaman utama
 Route::view('/', 'home')->name('home');
 
-// ======== AUTH FRONTEND (HANYA UI, TANPA LOGIKA) ========
+// ======== AUTH ========
 
-// Login Page UI
-Route::view('/login', 'auth.login')->name('login.simulasi');
+// 1. Halaman Login (UI)
+Route::view('/login', 'auth.login')->name('login');
 
-// Register Page UI
+// 2. Proses Login (POST)
+Route::post('/login', function (Request $request) {
+    $credentials = $request->validate([
+        'email' => ['required', 'email'],
+        'password' => ['required'],
+    ]);
+
+    if (Auth::attempt($credentials)) {
+        $request->session()->regenerate();
+        if (Auth::user()->role === 'admin') {
+             return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('dashboard.index');
+    }
+
+    return back()->withErrors([
+        'email' => 'Email atau password salah.',
+    ]);
+})->name('login.perform');
+
+
+// Halaman Register
 Route::get('/register', function () {
     $response = Http::get('http://127.0.0.1:8000/api/paket');
-    $paket = $response->json('data');
-
+    $paket = $response->json('data') ?? [];
     return view('auth.register', compact('paket'));
 })->name('register.simulasi');
 
-// Logout UI (sementara pakai session simulasi)
-Route::get('/logout', function () {
-    session()->forget('user');
+// Proses Logout
+Route::get('/logout', function (Request $request) {
+    Auth::logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
     return redirect()->route('login.simulasi');
 })->name('logout.simulasi');
 
-/*
-|--------------------------------------------------------------------------
-| 🚫 BACKEND LOGIN SIMULASI (NANTI DIPINDAH KE CONTROLLER)
-|--------------------------------------------------------------------------
-| Ini nanti digantikan oleh axios POST /api/login ke backend
-| Untuk sekarang dikomentar biar tidak bentrok
-|--------------------------------------------------------------------------
-*/
-// Route::post('/login', function (Request $request) {
-//     $email = $request->email;
-//     $password = $request->password;
 
-//     if ($email === 'adminlinguedu@gmail.com' && $password === 'admin1234') {
-//         session(['user_role' => 'admin']);
-//         session(['user_email' => $email]);
-//         return redirect()->route('admin.dashboard');
-//     }
+// ======== MEMBER PAGES (DASHBOARD & MATERI) ========
+Route::prefix('member')->middleware('auth')->group(function () {
 
-//     session(['user_role' => 'user']);
-//     session(['user_email' => $email]);
-//     return redirect()->route('dashboard.index');
-// })->name('login.simulasi.post');
-
-
-// ======== DASHBOARD USER PAGES ========
-Route::prefix('member')->group(function () {
     Route::view('/dashboard', 'member.dashboard.index')->name('dashboard.index');
-    Route::view('/materi', 'member.dashboard.materi')->name('dashboard.materi');
+
+    // Route Materi (Fetch dari API Backend)
+    Route::get('/materi', function () {
+        $response = Http::get('http://127.0.0.1:8000/api/admin/materi');
+        $semuaMateri = collect($response->json('data') ?? []);
+
+        $materiLevel1 = $semuaMateri->where('level', 1)->map(function ($item) {
+            return [
+                'title' => $item['judul'],
+                'desc'  => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Belajar via Video',
+                'img'   => 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80',
+                'progress' => 0,
+                'slug'  => Str::slug($item['judul'], '-')
+            ];
+        });
+
+        $materiLevel2 = $semuaMateri->where('level', 2)->map(function ($item) {
+            return [
+                'title' => $item['judul'],
+                'desc'  => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Materi Lanjutan',
+                'img'   => 'https://images.unsplash.com/photo-1593642634367-d91a135587b5?auto=format&fit=crop&w=800&q=80',
+                'progress' => 0,
+                'slug'  => Str::slug($item['judul'], '-')
+            ];
+        });
+
+        return view('member.dashboard.materi', [
+            'materiLevel1' => $materiLevel1,
+            'materiLevel2' => $materiLevel2
+        ]);
+    })->name('dashboard.materi');
+
     Route::view('/laporan', 'member.dashboard.laporan')->name('dashboard.laporan');
     Route::view('/sertifikasi', 'member.dashboard.sertifikasi')->name('dashboard.sertifikasi');
+
+    // Route Detail Materi Teori
+    Route::get('/teori/{slug}', function ($slug) {
+        return view('member.dashboard.teori', ['slug' => $slug]);
+    })->name('member.teori');
+
+    // Route Kuis
+    Route::get('/kuis/{slug}', function ($slug) {
+        return view('member.dashboard.kuis.show', ['slug' => $slug]);
+    })->name('member.kuis.show');
+
+    // ✅ Route Video (VERSI BENAR - CUMA SATU AJA)
+    Route::get('/video/{slug}', function ($slug) {
+        // 1. Tembak API Backend
+        $response = Http::get("http://127.0.0.1:8000/api/materi/{$slug}");
+
+        // 2. Cek jika materi tidak ditemukan
+        if ($response->failed()) {
+            abort(404, 'Materi tidak ditemukan di API.');
+        }
+
+        // 3. Ambil datanya
+        $materi = $response->json('data');
+
+        // 4. Kirim ke View
+        return view('member.dashboard.video', [
+            'slug' => $slug,
+            'materi' => $materi
+        ]);
+    })->name('member.video');
 });
 
-Route::view('/dashboard/video', 'member.dashboard.video')->name('dashboard.video');
-Route::get('/member/video/{slug}', function ($slug) {
-    return view('member.dashboard.video', ['slug' => $slug]);
-})->name('member.video');
 
-// Route::get('/member/teori', function () {
-//     return view('member.dashboard.teori');
-// })->name('member.teori');
-
-
-// ======== ADMIN UI ONLY (Blade) ========
+// ======== ADMIN PAGES ========
 Route::view('/admin/login', 'auth.loginadmin')->name('admin.login');
-
-/*
-|--------------------------------------------------------------------------
-| 🚫 BACKEND LOGIN ADMIN (NANTI PAKE CONTROLLER DAN JWT)
-|--------------------------------------------------------------------------
-*/
-// Route::post('/admin/login', function (Request $request) {
-//     session(['admin' => true]);
-//     return redirect('/admin/dashboard');
-// })->name('admin.login.post');
 
 Route::get('/admin/dashboard', function () {
     return view('admin.dashboard');
 })->name('admin.dashboard');
 
-
-// Admin Pages UI Only
-// Route::get('/admin/users', function () {
-//     $users = await User::all();
-
-//     return view('Admin.Pages.users', [
-//         'users' => $users
-//     ]);
-// })->name('admin.users');
-// routes/web.php
-// Route::get('/admin/users', function () {
-//     $response = Http::get('http://127.0.0.1:8000/api/admin/users');
-//     $users = $response->json();
-
-//     return view('Admin.Pages.users', compact('users'));
-// })->name('admin.users');
 Route::get('/admin/users', function () {
     $response = Http::get('http://127.0.0.1:8000/api/admin/users');
     $users = $response->json() ?? [];
-
     return view('Admin.Pages.users', compact('users'));
 })->name('admin.users');
-// UI Paket (Blade)
+
 Route::view('/admin/paket', 'Admin.Pages.paket')->name('admin.paket');
-
-// UI Bahasa (Blade) –> file: resources/views/Admin/Pages/bahasa.blade.php
 Route::view('/admin/bahasa', 'Admin.Pages.bahasa')->name('admin.bahasa');
-
 Route::view('/admin/materi', 'Admin.Pages.materi')->name('admin.materi');
 Route::view('/admin/kuis', 'Admin.Pages.kuis')->name('admin.kuis');
 Route::view('/admin/sertifikasi', 'Admin.Pages.sertifikasi')->name('admin.sertifikasi');
 Route::view('/admin/sertifikat', 'Admin.Pages.sertifikat')->name('admin.sertifikat');
-
-// Route::get('/member/kuis/{id_kuis}', function ($id_kuis) {
-//     return view('member.dashboard.kuis.show', compact('id_kuis'));
-// })->name('member.kuis.show');
-
-// // TEORI
-// Route::get('/member/teori/{slug?}', function ($slug = 'introduction-to-programming') {
-//     return view('member.dashboard.teori', compact('slug'));
-// })->name('member.teori');
-
-// // KUIS – pakai slug, bukan id_kuis
-// Route::get('/member/kuis/{slug}', function ($slug) {
-//     return view('member.dashboard.kuis.show', compact('slug'));
-// })->name('member.kuis.show');
-
-// ------ TEORI ------
-Route::get('/member/teori/{slug?}', function ($slug = 'introduction-to-programming') {
-    return view('member.dashboard.teori', compact('slug'));
-})->name('member.teori');
-
-// ------ KUIS (pakai slug) ------
-Route::get('/member/kuis/{slug}', function ($slug) {
-    return view('member.dashboard.kuis.show', compact('slug'));
-})->name('member.kuis.show');
-
-

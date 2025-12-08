@@ -49,7 +49,7 @@
 
             <!-- LOGOUT -->
             <div class="hidden md:block">
-                <a href="{{ route('login.simulasi') }}"
+                <a href="{{ route('logout.simulasi') }}"
                     class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-md font-semibold transition">
                     Keluar
                 </a>
@@ -83,7 +83,7 @@
                 class="py-2 px-6 {{ request()->routeIs('dashboard.sertifikasi') ? 'text-indigo-600 font-semibold' : 'text-gray-700 hover:text-indigo-600' }}">
                 Sertifikasi
             </a>
-            <a href="{{ route('login.simulasi') }}"
+            <a href="{{ route('logout.simulasi') }}"
                 class="py-2 px-6 text-red-600 hover:bg-gray-50 font-semibold border-t border-gray-100">
                 Keluar
             </a>

@@ -5,224 +5,249 @@
 @section('style')
     @vite('resources/css/kuis.css')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <style>
-        /* Progress Text Besar */
-        .progress-text-big {
-            font-size: 3rem;
-            font-weight: 800;
-            line-height: 1;
-            background: linear-gradient(135deg, #9966cc, #6699cc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        /* Tombol Submit Keren */
+        .btn-submit-main {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            transition: all 0.3s ease;
         }
-
-        /* Bar Progress */
-        .custom-progress-track {
-            background-color: #f3f4f6;
-            border-radius: 9999px;
-            overflow: hidden;
-            height: 16px;
-        }
-        .custom-progress-fill {
-            background: linear-gradient(90deg, #d8bfd8, #9966cc);
-            height: 100%;
-            border-radius: 9999px;
-            transition: width 0.5s ease-out;
-        }
-
-        /* Floating Card */
-        .floating-card {
-            background: white;
-            border-radius: 1rem;
-            border: 1px solid #f3f4f6;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        .btn-submit-main:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.6);
         }
     </style>
 @endsection
 
 @section('content')
-    @php
-        $slug = $slug ?? (request()->route('slug') ?? 'introduction-to-programming');
-        $title = 'Kuis: ' . ucwords(str_replace('-', ' ', $slug));
-    @endphp
-
-    {{-- CONTAINER UTAMA --}}
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
 
-        {{-- HEADER SECTION (Tanpa Kembali ke Teori) --}}
+        {{-- HEADER --}}
         <div class="mb-8">
             <div class="inline-block bg-white text-indigo-600 shadow-sm px-4 py-2 rounded-full mb-4 text-sm font-bold border border-indigo-100">
                 <i class="bi bi-patch-check-fill me-1"></i> Mode Ujian
             </div>
-            <h2 class="text-3xl font-extrabold text-gray-900 mb-2">{{ $title }}</h2>
-            <p class="text-gray-500 text-lg">
-                Jawab pertanyaan berikut untuk menguji pemahamanmu.
-            </p>
+            <h2 class="text-3xl font-extrabold text-gray-900 mb-2" id="judul-kuis">Sedang memuat soal...</h2>
+            <p class="text-gray-500 text-lg">Jawab pertanyaan berikut untuk menguji pemahamanmu.</p>
         </div>
 
         <form id="quizForm">
             <div class="flex flex-col lg:flex-row gap-8">
 
-                {{-- KOLOM KIRI: DAFTAR SOAL --}}
+                {{-- KOLOM KIRI --}}
                 <div class="w-full lg:w-2/3 order-2 lg:order-1">
-                    <div class="space-y-8">
-
-                        {{-- Soal 1 --}}
-                        <div class="quiz-card" id="card-1">
-                            <h5 class="question-text">1. Apa itu variabel dalam pemrograman?</h5>
-                            <div class="options-group">
-                                <input class="option-input" type="radio" name="q1" id="q1a" value="a">
-                                <label class="option-label" for="q1a">Tempat menyimpan data di memori.</label>
-
-                                <input class="option-input" type="radio" name="q1" id="q1b" value="b">
-                                <label class="option-label" for="q1b">Sebuah perulangan (looping).</label>
-
-                                <input class="option-input" type="radio" name="q1" id="q1c" value="c">
-                                <label class="option-label" for="q1c">Kesalahan program (bug).</label>
-                            </div>
+                    <div class="space-y-8" id="daftar-soal-container">
+                        <div class="text-center py-10">
+                            <div class="spinner-border text-indigo-600" role="status"></div>
+                            <p class="mt-2 text-gray-400">Menghubungi server...</p>
                         </div>
-
-                        {{-- Soal 2 --}}
-                        <div class="quiz-card" id="card-2">
-                            <h5 class="question-text">2. Operator apa yang digunakan untuk membandingkan kesamaan?</h5>
-                            <div class="options-group">
-                                <input class="option-input" type="radio" name="q2" id="q2a" value="a">
-                                <label class="option-label" for="q2a">= (Sama dengan tunggal)</label>
-
-                                <input class="option-input" type="radio" name="q2" id="q2b" value="b">
-                                <label class="option-label" for="q2b">== (Sama dengan ganda)</label>
-
-                                <input class="option-input" type="radio" name="q2" id="q2c" value="c">
-                                <label class="option-label" for="q2c">+ (Tambah)</label>
-                            </div>
-                        </div>
-
-                        {{-- Soal 3 --}}
-                        <div class="quiz-card checkbox-group" id="card-3">
-                            <h5 class="question-text">3. Manakah yang termasuk struktur kontrol alur? (Pilih > 1)</h5>
-                            <div class="options-group">
-                                <input class="option-input" type="checkbox" name="q3[]" id="q3a" value="if">
-                                <label class="option-label" for="q3a">if / else</label>
-
-                                <input class="option-input" type="checkbox" name="q3[]" id="q3b" value="for">
-                                <label class="option-label" for="q3b">for / while</label>
-
-                                <input class="option-input" type="checkbox" name="q3[]" id="q3c" value="echo">
-                                <label class="option-label" for="q3c">echo / print</label>
-                            </div>
-                        </div>
-
-                        {{-- TOMBOL SUBMIT UTAMA (Di Bawah Soal) - FIX WARNA INDIGO --}}
-                        <div class="pt-8 border-t border-gray-100">
-                            {{-- Menggunakan style bg-indigo-50 dan text-indigo-600 (Sama persis dengan sidebar tapi lebih besar) --}}
-                            <button type="button" onclick="submitQuiz()" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold py-4 rounded-xl shadow-sm border border-indigo-200 transform transition hover:scale-[1.01] flex items-center justify-center gap-2 text-lg">
-                                <i class="bi bi-send-check-fill text-2xl"></i>
-                                <span>Kirim Jawaban</span>
-                            </button>
-                            <p class="text-center text-gray-400 text-sm mt-3">Pastikan semua soal telah terjawab</p>
-                        </div>
-
                     </div>
-                </div>
 
-                {{-- KOLOM KANAN: PROGRESS BAR (Sticky Sidebar) --}}
-                <div class="w-full lg:w-1/3 order-1 lg:order-2">
-                    <div class="sticky top-8 space-y-4">
-
-                        {{-- Kartu Progress --}}
-                        <div class="floating-card p-6 bg-white">
-                            <div class="text-center mb-4">
-                                <small class="uppercase tracking-widest text-gray-400 font-bold text-xs">Status Pengerjaan</small>
-                                <div class="mt-2 flex items-baseline justify-center">
-                                    <span id="progress-text" class="progress-text-big">0%</span>
-                                </div>
-                                <p class="text-gray-400 text-sm mt-1">Selesaikan semua soal</p>
-                            </div>
-
-                            <div class="custom-progress-track mb-6 w-full bg-gray-100 rounded-full h-4">
-                                <div class="custom-progress-fill" style="width: 0%"></div>
-                            </div>
-
-                            <div class="flex items-center justify-center text-gray-400 text-sm gap-2">
-                                <i class="bi bi-clock"></i> <span>Waktu tidak dibatasi</span>
-                            </div>
-
-                            {{-- TOMBOL SUBMIT PINTASAN (Sidebar) --}}
-                            <div class="hidden lg:block mt-6 pt-4 border-t border-gray-50">
-                                <button type="button" onclick="submitQuiz()" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold py-2 rounded-lg transition text-sm">
-                                    Kirim Jawaban
-                                </button>
-                            </div>
-                        </div>
-
-                        {{-- Tombol Kembali ke Atas --}}
-                        <button type="button" onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
-                                class="w-full bg-white hover:bg-gray-50 text-gray-500 font-bold py-3 rounded-xl border border-gray-200 transition flex items-center justify-center gap-2 shadow-sm">
-                            <i class="bi bi-arrow-up-circle-fill"></i>
-                            <span>Kembali ke Atas</span>
+                    {{-- TOMBOL SUBMIT --}}
+                    <div class="pt-8 border-t border-gray-100 hidden" id="tombol-submit-container">
+                        <button type="button" onclick="submitQuiz()" class="w-full btn-submit-main font-bold py-4 rounded-xl flex items-center justify-center gap-2 text-lg">
+                            <i class="bi bi-send-check-fill text-2xl"></i>
+                            <span>Kirim Jawaban Final</span>
                         </button>
                     </div>
                 </div>
 
+                {{-- KOLOM KANAN --}}
+                <div class="w-full lg:w-1/3 order-1 lg:order-2">
+                    <div class="sticky top-8 space-y-4">
+                        <div class="floating-card p-6 bg-white">
+                            <div class="text-center mb-4">
+                                <small class="uppercase tracking-widest text-gray-400 font-bold text-xs">Status</small>
+                                <div class="mt-2 flex items-baseline justify-center">
+                                    <span id="progress-text" class="progress-text-big">0%</span>
+                                </div>
+                            </div>
+                            <div class="custom-progress-track mb-6 w-full bg-gray-100 rounded-full h-4">
+                                <div class="custom-progress-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </form>
     </div>
 
-    {{-- JAVASCRIPT --}}
     <script>
+        let totalSoal = 0;
+        let idKuisSaatIni = null; // Simpan ID Kuis global
+
+        // Kita ambil ID dari sesi login Laravel.
+        // Jika user belum login, nilainya null.
+        const currentUserId = {{ auth()->id() ?? 'null' }};
+
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('quizForm');
-            const inputs = form.querySelectorAll('input');
+            const slug = "{{ $slug }}";
+            const apiUrl = `http://127.0.0.1:8000/api/kuis/${slug}`;
+
+            fetch(apiUrl)
+                .then(res => {
+                    if(!res.ok) throw new Error("Kuis belum tersedia");
+                    return res.json();
+                })
+                .then(response => {
+                    const data = response.data;
+                    const listSoal = data.soal;
+
+                    idKuisSaatIni = data.kuis_info.id_kuis; // Simpan ID Kuis dari response
+
+                    document.getElementById('judul-kuis').innerText = "Kuis: " + data.materi.judul;
+                    const container = document.getElementById('daftar-soal-container');
+                    container.innerHTML = '';
+
+                    totalSoal = listSoal.length;
+
+                    if (totalSoal === 0) {
+                        container.innerHTML = `<div class="p-4 bg-yellow-100">Soal kosong.</div>`;
+                        return;
+                    }
+
+                    listSoal.forEach((soal, index) => {
+                        const nomor = index + 1;
+                        const htmlSoal = `
+                            <div class="quiz-card" id="card-${soal.id_soal_kuis}">
+                                <h5 class="question-text">${nomor}. ${soal.pertanyaan}</h5>
+                                <div class="options-group">
+                                    ${renderOption(soal.id_soal_kuis, 'A', soal.opsi_a)}
+                                    ${renderOption(soal.id_soal_kuis, 'B', soal.opsi_b)}
+                                    ${renderOption(soal.id_soal_kuis, 'C', soal.opsi_c)}
+                                    ${renderOption(soal.id_soal_kuis, 'D', soal.opsi_d)}
+                                </div>
+                            </div>
+                        `;
+                        container.innerHTML += htmlSoal;
+                    });
+
+                    document.getElementById('tombol-submit-container').classList.remove('hidden');
+                    attachInputListeners();
+                })
+                .catch(err => {
+                    document.getElementById('daftar-soal-container').innerHTML = `<div class="text-red-500">${err.message}</div>`;
+                });
+        });
+
+        function renderOption(idSoal, abjad, text) {
+            if(!text) return '';
+            return `
+                <input class="option-input" type="radio" name="q${idSoal}" id="opt-${idSoal}-${abjad}" value="${abjad}">
+                <label class="option-label" for="opt-${idSoal}-${abjad}">${text}</label>
+            `;
+        }
+
+        function attachInputListeners() {
+            const inputs = document.querySelectorAll('input.option-input');
             const progressBar = document.querySelector('.custom-progress-fill');
             const progressText = document.getElementById('progress-text');
-            const totalQuestions = 3;
 
             function updateProgress() {
                 let answered = new Set();
-                inputs.forEach(input => {
-                    if (input.checked) {
-                        const questionName = input.name.replace('[]', '');
-                        answered.add(questionName);
-                    }
-                });
-
-                let percent = (answered.size / totalQuestions) * 100;
-
+                inputs.forEach(input => { if (input.checked) answered.add(input.name); });
+                let percent = (answered.size / totalSoal) * 100;
                 progressBar.style.width = percent + '%';
                 progressText.innerText = Math.round(percent) + '%';
 
                 document.querySelectorAll('.quiz-card').forEach(card => {
-                    if(card.querySelector('input:checked')) {
-                        card.classList.add('active');
-                    } else {
-                        card.classList.remove('active');
-                    }
+                    if(card.querySelector('input:checked')) card.classList.add('active');
+                    else card.classList.remove('active');
                 });
             }
+            inputs.forEach(input => input.addEventListener('change', updateProgress));
+        }
 
-            inputs.forEach(input => {
-                input.addEventListener('change', updateProgress);
-            });
-        });
-
+        // --- LOGIKA SUBMIT KE DATABASE ---
         function submitQuiz() {
+            const inputs = document.querySelectorAll('input.option-input:checked');
+
+            // 1. Cek Kelengkapan
+            if(inputs.length < totalSoal) {
+                Swal.fire('Ups!', 'Jawab semua soal dulu ya!', 'warning');
+                return;
+            }
+
+            // 2. Cek Login Dulu (Validasi Tambahan di Frontend)
+            if (!currentUserId) {
+                Swal.fire({
+                    title: 'Akses Ditolak',
+                    text: 'Sistem tidak mengenali Anda. Silakan login ulang.',
+                    icon: 'warning',
+                    confirmButtonText: 'Login Dulu',
+                    confirmButtonColor: '#4f46e5'
+                }).then(() => {
+                    // Arahkan ke halaman login
+                    window.location.href = "{{ route('login.simulasi') }}";
+                });
+                return;
+            }
+
+            // 3. Siapkan Payload Data
+            const answers = [];
+            inputs.forEach(input => {
+                const idSoal = input.name.replace('q', '');
+                answers.push({
+                    id_soal_kuis: parseInt(idSoal),
+                    jawaban: input.value
+                });
+            });
+
+            const payload = {
+                id_member: currentUserId,
+                answers: answers
+            };
+
+            // 4. Tampilkan Loading
             Swal.fire({
-                title: 'Kirim Jawaban?',
-                text: "Yakin sudah selesai?",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#9966cc',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Ya, Kirim!',
-                cancelButtonText: 'Cek Lagi'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire('Terkirim!', 'Jawabanmu tersimpan.', 'success').then(() => {
-                         window.location.href = "{{ route('dashboard.materi') }}";
-                    });
-                }
+                title: 'Sedang Mengirim...',
+                text: 'Mohon tunggu sebentar',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            // 5. Kirim ke API Backend
+            fetch(`http://127.0.0.1:8000/api/kuis/${idKuisSaatIni}/submit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
             })
+            .then(res => res.json())
+            .then(response => {
+                if(response.error) throw new Error(response.error);
+
+                // 5. Tampilkan Hasil dari Server
+                const data = response.data;
+                const skor = data.skor;
+                const status = data.status; // Lulus / Tidak Lulus
+
+                let icon = skor >= 60 ? 'success' : 'error';
+                let pesan = skor >= 60 ? 'Selamat! Kamu Lulus 🎉' : 'Jangan menyerah, coba lagi! 💪';
+
+                Swal.fire({
+                    title: `Nilai Kamu: ${skor}`,
+                    html: `
+                        <h3 class="text-2xl font-bold mb-2">${status}</h3>
+                        <p>${pesan}</p>
+                        <p class="text-sm text-gray-500 mt-2">Benar ${data.benar} dari ${data.total} soal</p>
+                    `,
+                    icon: icon,
+                    confirmButtonText: 'Kembali ke Materi',
+                    confirmButtonColor: '#4f46e5'
+                }).then(() => {
+                    const slug = "{{ $slug }}";
+                    window.location.href = `/member/teori/${slug}`;
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Error', 'Gagal menyimpan nilai: ' + err.message, 'error');
+            });
         }
     </script>
 @endsection

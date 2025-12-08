@@ -112,7 +112,7 @@
         </div>
 
         <div class="border-top pt-3">
-            <a href="{{ route('login.simulasi') }}" class="text-danger fw-semibold text-decoration-none">
+            <a href="{{ route('logout.simulasi') }}" class="text-danger fw-semibold text-decoration-none">
                 🚪 Keluar
             </a>
         </div>
