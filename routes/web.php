@@ -6,17 +6,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
-// 👇 Tambahan Import untuk fitur Adhi
-use App\Http\Controllers\ProfileController;
-use App\Http\Middleware\FrontendAuth;
 
 // ================= FRONTEND ROUTES =================
 
 Route::view('/', 'home')->name('home');
 
-// ======== AUTH (Versi Dex - Teruji) ========
+// ======== AUTH ========
 
-// 1. Halaman Login (UI)
 Route::view('/login', 'auth.login')->name('login');
 
 Route::post('/login', function (Request $request) {
@@ -59,14 +55,12 @@ Route::post('/login', function (Request $request) {
     return redirect()->route('dashboard.index');
 })->name('login.perform');
 
-// Halaman Register
 Route::get('/register', function () {
     $response = Http::get('http://127.0.0.1:8000/api/paket');
     $paket = $response->json('data') ?? [];
     return view('auth.register', compact('paket'));
 })->name('register.simulasi');
 
-// Proses Logout
 Route::get('/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();
@@ -75,69 +69,80 @@ Route::get('/logout', function (Request $request) {
 })->name('logout.simulasi');
 
 
-// ======== MEMBER PAGES (Materi & Video - Versi Dex API) ========
+// ======== MEMBER PAGES ========
 Route::prefix('member')->middleware('auth')->group(function () {
 
     Route::view('/dashboard', 'member.dashboard.index')->name('dashboard.index');
 
-    // Route Materi (Fetch dari API Backend)
+    // ✅ MATERI ROUTE (API MEMBER + LOGIC UNLOCK)
+    // ✅ MATERI ROUTE (UPDATED: Cek Level Gembok)
     Route::get('/materi', function () {
-        $response = Http::get('http://127.0.0.1:8000/api/admin/materi');
+        $userId = Auth::id();
+
+        // 1. Ambil Level Terakhir User dari Database
+        // Kita pakai Query Builder langsung biar praktis
+        $userLevel = DB::table('registrasi_kursus')
+            ->where('id_member', $userId)
+            ->value('last_unlocked_level') ?? 1; // Default 1 kalau belum ada data
+
+        // 2. Ambil Data Materi (Sama kayak sebelumnya)
+        $response = Http::get('http://127.0.0.1:8000/api/member/materi-list', [
+            'id_member' => $userId,
+        ]);
         $semuaMateri = collect($response->json('data') ?? []);
 
+        // 3. Logic Tombol Level 1 Selesai (Sama kayak sebelumnya)
+        $isLevel1Complete = $semuaMateri->where('level', 1)->every(function ($item) {
+            return $item['progress'] == 100;
+        });
+
+        // 4. Mapping Data (Sama kayak sebelumnya)
         $materiLevel1 = $semuaMateri->where('level', 1)->map(function ($item) {
             return [
                 'title' => $item['judul'],
-                'desc' => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Belajar via Video',
-                'img' => 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80',
-                'progress' => 0,
-                'slug' => Str::slug($item['judul'], '-')
+                'desc'  => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Belajar via Video',
+                'img'   => 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80',
+                'progress' => $item['progress'],
+                'slug'  => $item['slug']
             ];
         });
 
         $materiLevel2 = $semuaMateri->where('level', 2)->map(function ($item) {
             return [
                 'title' => $item['judul'],
-                'desc' => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Materi Lanjutan',
-                'img' => 'https://images.unsplash.com/photo-1593642634367-d91a135587b5?auto=format&fit=crop&w=800&q=80',
-                'progress' => 0,
-                'slug' => Str::slug($item['judul'], '-')
+                'desc'  => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Materi Lanjutan',
+                'img'   => 'https://images.unsplash.com/photo-1593642634367-d91a135587b5?auto=format&fit=crop&w=800&q=80',
+                'progress' => $item['progress'],
+                'slug'  => $item['slug']
             ];
         });
 
         return view('member.dashboard.materi', [
             'materiLevel1' => $materiLevel1,
-            'materiLevel2' => $materiLevel2
+            'materiLevel2' => $materiLevel2,
+            'isLevel1Finished' => $isLevel1Complete,
+            'userLevel' => $userLevel // <--- KITA KIRIM DATA LEVEL KE VIEW
         ]);
     })->name('dashboard.materi');
 
     Route::view('/laporan', 'member.dashboard.laporan')->name('dashboard.laporan');
     Route::view('/sertifikasi', 'member.dashboard.sertifikasi')->name('dashboard.sertifikasi');
 
-    // Route Detail Materi Teori
     Route::get('/teori/{slug}', function ($slug) {
         return view('member.dashboard.teori', ['slug' => $slug]);
     })->name('member.teori');
 
-    // Route Kuis
     Route::get('/kuis/{slug}', function ($slug) {
         return view('member.dashboard.kuis.show', ['slug' => $slug]);
     })->name('member.kuis.show');
 
-    // ✅ Route Video (VERSI BENAR - API FETCH)
+    // VIDEO ROUTE
     Route::get('/video/{slug}', function ($slug) {
-        // 1. Tembak API Backend
         $response = Http::get("http://127.0.0.1:8000/api/materi/{$slug}");
-
-        // 2. Cek jika materi tidak ditemukan
         if ($response->failed()) {
             abort(404, 'Materi tidak ditemukan di API.');
         }
-
-        // 3. Ambil datanya
         $materi = $response->json('data');
-
-        // 4. Kirim ke View
         return view('member.dashboard.video', [
             'slug' => $slug,
             'materi' => $materi
@@ -146,20 +151,31 @@ Route::prefix('member')->middleware('auth')->group(function () {
 });
 
 
-// ======== PROFILE ROUTES (Fitur Adhi) ========
-// Kita bungkus pakai middleware FrontendAuth sesuai kode Adhi
-// Note: Pastikan class FrontendAuth sudah ada, kalau error bisa dihapus middleware-nya sementara
+// ======== PROFILE ROUTES (LOGIC LANGSUNG) ========
 Route::middleware(['auth'])->group(function () {
     Route::view('/profile', 'profile.dashboard')->name('dashboard.profile');
     Route::view('/profile/edit', 'profile.edit')->name('profile.edit');
-    // Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+
+    Route::put('/profile/update', function (Request $request) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'name'  => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+        ]);
+
+        $user->update($validated);
+
+        return back()->with('success', 'Profil berhasil diperbarui!');
+    })->name('profile.update');
 });
 
-// // Route Session Tambahan Adhi (Kita simpan jaga-jaga)
-// Route::post('/frontend-login', function (Request $request) {
-//     session(['user' => $request->user]);
-//     return response()->json(['status' => 'ok']);
-// });
+// Route Session Tambahan Adhi
+Route::post('/frontend-login', function (Request $request) {
+    session(['user' => $request->user]);
+    return response()->json(['status' => 'ok']);
+});
 
 Route::post('/frontend-update-session', function (Request $request) {
     session(['user' => $request->all()]);
