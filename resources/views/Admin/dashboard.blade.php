@@ -137,6 +137,12 @@
                     <h3 class="text-yellow-700 font-semibold mb-1">📘 Setting Materi</h3>
                     <p class="text-sm text-gray-600">Kelola materi pembelajaran.</p>
                 </a>
+                {{-- Manajemen Teori --}}
+                <a href="{{ route('admin.teori') }}"
+                    class="p-4 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 transition shadow-sm block">
+                    <h3 class="text-blue-700 font-semibold mb-1">👥 Pengaturan Teori</h3>
+                    <p class="text-sm text-gray-600">Kelola data Teori setiap Materi.</p>
+                </a>
 
                 {{-- Setting Kuis --}}
                 <a href="{{ route('admin.kuis') }}"

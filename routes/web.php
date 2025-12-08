@@ -17,39 +17,54 @@ Route::view('/', 'home')->name('home');
 Route::view('/login', 'auth.login')->name('login');
 
 Route::post('/login', function (Request $request) {
-    // Validasi form
-    $request->validate([
+    $data = $request->validate([
         'email' => ['required', 'email'],
         'password' => ['required'],
     ]);
 
-    // Normalisasi email ke lowercase
-    $email = strtolower($request->input('email'));
-    $password = $request->input('password');
+    // 1. Panggil API backend
+    $response = Http::post('http://127.0.0.1:8000/api/login', $data);
 
-    // Cari user berdasarkan email (case-insensitive untuk jaga-jaga)
-    $user = User::whereRaw('LOWER(email) = ?', [$email])->first();
-
-    // Cek user & password
-    if (!$user || !Hash::check($password, $user->password)) {
+    if ($response->status() === 401) {
         return back()
             ->withErrors(['email' => 'Email atau password salah.'])
             ->withInput();
     }
 
-    // (Opsional) kalau mau blokir member yang belum aktif, taruh di sini
-    // if ($user->role === 'member' && is_null($user->email_verified_at)) {
-    //     return back()
-    //         ->withErrors(['email' => 'Akun Anda belum aktif. Silakan hubungi admin.'])
-    //         ->withInput();
-    // }
+    if ($response->status() === 403) {
+        return back()
+            ->withErrors(['email' => 'Akun Anda belum aktif. Hubungi admin.'])
+            ->withInput();
+    }
 
-    // Login manual
-    Auth::login($user);
-    $request->session()->regenerate();
+    if ($response->failed()) {
+        return back()
+            ->withErrors(['email' => 'Server bermasalah. Coba lagi nanti.'])
+            ->withInput();
+    }
 
-    // Redirect berdasarkan role
-    if ($user->role === 'admin') {
+    // 2. Ambil data user dari API
+    $apiUser = $response->json('user');
+    $token = $response->json('token');
+
+    // 3. Login-kan ke Laravel guard "web"
+    //    (pastikan FE pakai DB yang sama dengan backend)
+    $userModel = User::find($apiUser['id'])
+        ?? User::where('email', $apiUser['email'])->first();
+
+    if ($userModel) {
+        Auth::login($userModel);
+        $request->session()->regenerate();
+    }
+
+    // 4. Simpan juga token API kalau nanti mau dipakai
+    session([
+        'api_user' => $apiUser,
+        'api_token' => $token,
+    ]);
+
+    // 5. Redirect sesuai role
+    if ($apiUser['role'] === 'admin') {
         return redirect()->route('admin.dashboard');
     }
 
@@ -64,6 +79,7 @@ Route::get('/register', function () {
 
 Route::get('/logout', function (Request $request) {
     Auth::logout();
+    $request->session()->forget(['api_user', 'api_token']);
     $request->session()->invalidate();
     $request->session()->regenerateToken();
     return redirect()->route('login');
@@ -73,7 +89,49 @@ Route::get('/logout', function (Request $request) {
 // ======== MEMBER PAGES ========
 Route::prefix('member')->middleware('auth')->group(function () {
 
-    Route::view('/dashboard', 'member.dashboard.index')->name('dashboard.index');
+    Route::get('/dashboard', function () {
+        $user = Auth::user();
+
+        // Ambil registrasi kursus terakhir milik user ini
+        $registrasi = DB::table('registrasi_kursus as r')
+            ->join('kursus as k', 'r.id_course', '=', 'k.id_course')
+            ->join('bahasa as b', 'k.id_bahasa', '=', 'b.id')
+            ->join('paket as p', 'k.id_paket', '=', 'p.id')
+            ->select(
+                'r.progress',
+                'r.level',          // di DB kamu sekarang isinya "Beginner / Intermediate / Advanced"
+                'b.nama_bahasa',
+                'p.nama_paket',
+                'k.id_course'
+            )
+            ->where('r.id_member', $user->id) // pastikan id_member = users.id
+            ->orderByDesc('r.created_at')
+            ->first();
+
+        // Siapkan nilai default kalau belum pernah registrasi kursus
+        $courseName = null;
+        $packageName = null;
+        $languageName = null;
+        $progress = 0;
+        $levelLabel = null;
+
+        if ($registrasi) {
+            $languageName = $registrasi->nama_bahasa;       // contoh: "Bahasa Jepang"
+            $packageName = $registrasi->nama_paket;        // contoh: "Intermediate"
+            $courseName = $languageName . ' - ' . $packageName;
+            $progress = (int) $registrasi->progress;    // 0–100
+            $levelLabel = $registrasi->level;             // contoh: "Intermediate"
+        }
+
+        return view('member.dashboard.index', compact(
+            'user',
+            'courseName',
+            'packageName',
+            'languageName',
+            'progress',
+            'levelLabel'
+        ));
+    })->name('dashboard.index');
 
     // ✅ MATERI ROUTE (API MEMBER + LOGIC UNLOCK)
     // ✅ MATERI ROUTE (UPDATED: Cek Level Gembok)
@@ -101,20 +159,20 @@ Route::prefix('member')->middleware('auth')->group(function () {
         $materiLevel1 = $semuaMateri->where('level', 1)->map(function ($item) {
             return [
                 'title' => $item['judul'],
-                'desc'  => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Belajar via Video',
-                'img'   => 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80',
+                'desc' => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Belajar via Video',
+                'img' => 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80',
                 'progress' => $item['progress'],
-                'slug'  => $item['slug']
+                'slug' => $item['slug']
             ];
         });
 
         $materiLevel2 = $semuaMateri->where('level', 2)->map(function ($item) {
             return [
                 'title' => $item['judul'],
-                'desc'  => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Materi Lanjutan',
-                'img'   => 'https://images.unsplash.com/photo-1593642634367-d91a135587b5?auto=format&fit=crop&w=800&q=80',
+                'desc' => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Materi Lanjutan',
+                'img' => 'https://images.unsplash.com/photo-1593642634367-d91a135587b5?auto=format&fit=crop&w=800&q=80',
                 'progress' => $item['progress'],
-                'slug'  => $item['slug']
+                'slug' => $item['slug']
             ];
         });
 
@@ -130,8 +188,24 @@ Route::prefix('member')->middleware('auth')->group(function () {
     Route::view('/sertifikasi', 'member.dashboard.sertifikasi')->name('dashboard.sertifikasi');
 
     Route::get('/teori/{slug}', function ($slug) {
-        return view('member.dashboard.teori', ['slug' => $slug]);
+        // Panggil API backend
+        $response = Http::get("http://127.0.0.1:8000/api/teori/{$slug}");
+
+        if ($response->failed()) {
+            abort(404, 'Teori tidak ditemukan di API.');
+        }
+
+        $data = $response->json('data');
+        $materi = $data['materi'] ?? null;
+        $teori = $data['teori'] ?? null;
+
+        return view('member.dashboard.teori', [
+            'slug' => $slug,
+            'materi' => $materi,
+            'teori' => $teori,
+        ]);
     })->name('member.teori');
+
 
     Route::get('/kuis/{slug}', function ($slug) {
         return view('member.dashboard.kuis.show', ['slug' => $slug]);
@@ -162,7 +236,7 @@ Route::middleware(['auth'])->group(function () {
         $user = Auth::user();
 
         $validated = $request->validate([
-            'name'  => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
         ]);
 
@@ -203,3 +277,5 @@ Route::view('/admin/materi', 'Admin.Pages.materi')->name('admin.materi');
 Route::view('/admin/kuis', 'Admin.Pages.kuis')->name('admin.kuis');
 Route::view('/admin/sertifikasi', 'Admin.Pages.sertifikasi')->name('admin.sertifikasi');
 Route::view('/admin/sertifikat', 'Admin.Pages.sertifikat')->name('admin.sertifikat');
+Route::view('/admin/teori', 'Admin.Pages.teori')->name('admin.teori');
+
