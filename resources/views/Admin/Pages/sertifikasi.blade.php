@@ -12,50 +12,32 @@
 
         <h2 class="fw-bold mb-2">🏅 Manajemen Uji Sertifikasi</h2>
         <p class="text-muted mb-4">
-            Kelola soal uji sertifikasi berdasarkan Paket, Bahasa, Level, dan Materi.
+            Kelola soal uji sertifikasi per <strong>Paket + Bahasa</strong>.
         </p>
 
-        {{-- FILTER ATAS: PAKET / BAHASA / LEVEL / MATERI --}}
+        {{-- FILTER ATAS: PAKET / BAHASA --}}
         <div class="card mb-4">
             <div class="card-body">
 
                 <div class="row g-3 align-items-end">
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <label class="fw-semibold">Paket</label>
                         <select id="selectPaket" class="form-select">
                             <option value="">-- Pilih Paket --</option>
                         </select>
                     </div>
 
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <label class="fw-semibold">Bahasa</label>
                         <select id="selectBahasa" class="form-select">
                             <option value="">-- Pilih Bahasa --</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-2">
-                        <label class="fw-semibold">Level</label>
-                        <select id="selectLevel" class="form-select">
-                            <option value="">Semua</option>
-                            <option value="1">Level 1</option>
-                            <option value="2">Level 2</option>
-                            <option value="3">Level 3</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="fw-semibold">Materi</label>
-                        <select id="selectMateri" class="form-select">
-                            <option value="">-- Pilih Paket + Bahasa (+ Level) dulu --</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="mt-3">
                     <small class="text-muted">
-                        Sistem akan mencari materi berdasarkan kombinasi Paket + Bahasa + Level.
-                        Uji sertifikasi dibuat per materi.
+                        Uji sertifikasi dibuat per kombinasi Paket + Bahasa (per kursus).
                     </small>
                 </div>
             </div>
@@ -66,7 +48,7 @@
             <div>
                 <h5 class="mb-0 fw-semibold">Daftar Soal Uji Sertifikasi</h5>
                 <small id="infoUjiText" class="text-muted d-block">
-                    Pilih Paket, Bahasa, Level, dan Materi terlebih dahulu.
+                    Pilih Paket dan Bahasa terlebih dahulu.
                 </small>
             </div>
             <button class="btn btn-primary" id="btnAddSoal" disabled>
@@ -89,7 +71,7 @@
                 <tbody id="soalTable">
                     <tr>
                         <td colspan="5" class="text-center text-muted">
-                            Pilih Paket, Bahasa, Level, dan Materi terlebih dahulu.
+                            Pilih Paket dan Bahasa terlebih dahulu.
                         </td>
                     </tr>
                 </tbody>
@@ -139,16 +121,6 @@
                             <option value="C">Pilihan C</option>
                             <option value="D">Pilihan D</option>
                         </select>
-                    </div>
-
-                    <div class="mt-3">
-                        <label class="fw-semibold">KKM (Passing Score) Uji Sertifikasi ini (opsional)</label>
-                        <input type="number" id="addKKM" class="form-control w-auto" min="0" max="100"
-                            value="70">
-                        <small class="text-muted">
-                            Hanya dipakai saat membuat uji sertifikasi baru untuk materi ini. Kalau uji sudah ada, nilai KKM
-                            tidak diubah di sini.
-                        </small>
                     </div>
 
                 </div>
@@ -229,26 +201,22 @@
 
         let pakets = [];
         let bahasas = [];
-        let materis = [];
-
-        let currentTes = null; // { kode_tes, id_materi, id_course, skor (KKM?), ... }
-        let currentSoal = []; // array soal sertifikasi untuk currentTes
+        let currentTes = null;   // { kode_tes, id_course, kkm, ... }
+        let currentSoal = [];    // array soal sertifikasi
 
         const selectPaket = document.getElementById('selectPaket');
         const selectBahasa = document.getElementById('selectBahasa');
-        const selectLevel = document.getElementById('selectLevel');
-        const selectMateri = document.getElementById('selectMateri');
-        const soalTable = document.getElementById('soalTable');
-        const btnAddSoal = document.getElementById('btnAddSoal');
+        const soalTable   = document.getElementById('soalTable');
+        const btnAddSoal  = document.getElementById('btnAddSoal');
         const infoUjiText = document.getElementById('infoUjiText');
 
         /* =============================
-           LOAD MASTER DATA
+           LOAD MASTER DATA (PAKET & BAHASA)
         ============================== */
 
         async function loadPakets() {
             try {
-                const res = await api.get('/paket'); // dari AuthController::paket (public)
+                const res = await api.get('/paket');
                 pakets = Array.isArray(res.data.data) ? res.data.data : res.data;
                 selectPaket.innerHTML = '<option value="">-- Pilih Paket --</option>';
                 pakets.forEach(p => {
@@ -259,13 +227,13 @@
                 });
             } catch (e) {
                 console.error(e);
-                alert('Gagal memuat paket');
+                alert(e.response?.data?.message || 'Gagal memuat paket');
             }
         }
 
         async function loadBahasas() {
             try {
-                const res = await api.get('/bahasa'); // dari AuthController::bahasa
+                const res = await api.get('/bahasa');
                 bahasas = Array.isArray(res.data.data) ? res.data.data : res.data;
                 selectBahasa.innerHTML = '<option value="">-- Pilih Bahasa --</option>';
                 bahasas.forEach(b => {
@@ -276,110 +244,57 @@
                 });
             } catch (e) {
                 console.error(e);
-                alert('Gagal memuat bahasa');
+                alert(e.response?.data?.message || 'Gagal memuat bahasa');
             }
         }
 
-        async function loadMateris() {
-            const idPaket = selectPaket.value;
-            const idBahasa = selectBahasa.value;
-            const level = selectLevel.value;
+        /* =============================
+           LOAD TES + SOAL UNTUK KOMBINASI PAKET+BAHASA
+        ============================== */
 
-            selectMateri.innerHTML = '<option value="">-- Pilih Paket + Bahasa (+ Level) dulu --</option>';
-            currentTes = null;
+        async function loadTesForCourse() {
+            const idPaket  = selectPaket.value;
+            const idBahasa = selectBahasa.value;
+
+            currentTes  = null;
             currentSoal = [];
             renderSoal();
 
-            infoUjiText.textContent = 'Pilih Paket, Bahasa, Level, dan Materi terlebih dahulu.';
-            btnAddSoal.disabled = true;
+            btnAddSoal.disabled = !(idPaket && idBahasa);
+            infoUjiText.textContent = 'Pilih Paket dan Bahasa terlebih dahulu.';
 
             if (!idPaket || !idBahasa) {
                 return;
             }
 
             try {
-                const params = {
-                    paket: idPaket,
-                    bahasa: idBahasa
-                };
-                if (level) params.level = level;
-
-                const res = await api.get('/admin/materi/filter', {
-                    params
-                });
-                materis = Array.isArray(res.data.data) ? res.data.data : res.data;
-
-                if (!materis.length) {
-                    selectMateri.innerHTML = '<option value="">-- Tidak ada materi untuk filter ini --</option>';
-                    return;
-                }
-
-                selectMateri.innerHTML = '<option value="">-- Pilih Materi --</option>';
-                materis.forEach(m => {
-                    const opt = document.createElement('option');
-                    opt.value = m.id_materi;
-                    opt.textContent = `Level ${m.level} - ${m.judul}`;
-                    selectMateri.appendChild(opt);
-                });
-            } catch (e) {
-                console.error(e);
-                alert('Gagal memuat materi');
-            }
-        }
-
-        /* =============================
-           LOAD UJI SERTIFIKASI + SOAL
-        ============================== */
-
-        async function loadTesForMateri() {
-            const idMateri = selectMateri.value;
-
-            currentTes = null;
-            currentSoal = [];
-            renderSoal();
-
-            btnAddSoal.disabled = !idMateri;
-            infoUjiText.textContent = 'Pilih Paket, Bahasa, Level, dan Materi terlebih dahulu.';
-
-            if (!idMateri) {
-                soalTable.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="text-center text-muted">
-                            Pilih materi terlebih dahulu.
-                        </td>
-                    </tr>`;
-                return;
-            }
-
-            try {
-                // Ambil semua uji sertifikasi, lalu filter berdasarkan id_materi
-                const res = await api.get('/admin/sertifikasi/tes');
+                const res  = await api.get('/admin/sertifikasi/tes');
                 const list = Array.isArray(res.data.data) ? res.data.data : res.data;
 
-                const found = list.find(t => String(t.id_materi) === String(idMateri));
+                const found = list.find(t =>
+                    String(t.course?.id_paket)  === String(idPaket) &&
+                    String(t.course?.id_bahasa) === String(idBahasa)
+                );
+
                 currentTes = found || null;
 
                 if (!currentTes) {
                     infoUjiText.textContent =
-                        'Belum ada uji sertifikasi untuk materi ini. Tambah soal pertama akan otomatis membuat uji sertifikasi.';
-                    soalTable.innerHTML = `
-                        <tr>
-                            <td colspan="5" class="text-center text-muted">
-                                Belum ada soal untuk materi ini.
-                            </td>
-                        </tr>`;
+                        'Belum ada uji sertifikasi untuk kombinasi Paket + Bahasa ini. ' +
+                        'Tambah soal pertama akan otomatis membuat uji sertifikasi.';
+                    renderSoal();
                     return;
                 }
 
                 infoUjiText.textContent =
-                    `Uji Sertifikasi terdaftar (Kode Tes: ${currentTes.kode_tes}). Total soal: ${currentTes.jumlah_soal ?? (currentTes.soal_sertifikasi?.length || '-')}.`;
+                    `Uji Sertifikasi terdaftar (Kode Tes: ${currentTes.kode_tes}). ` +
+                    `Total soal: ${currentTes.jumlah_soal ?? (currentTes.soal_sertifikasi?.length || '-')}.`;
 
-                // Ambil soal untuk kode_tes ini
                 await loadSoalForTes(currentTes.kode_tes);
 
             } catch (e) {
                 console.error(e);
-                alert('Gagal memuat uji sertifikasi');
+                alert(e.response?.data?.message || 'Gagal memuat uji sertifikasi');
             }
         }
 
@@ -398,7 +313,7 @@
                 renderSoal();
             } catch (e) {
                 console.error(e);
-                alert('Gagal memuat soal sertifikasi');
+                alert(e.response?.data?.message || 'Gagal memuat soal sertifikasi');
             }
         }
 
@@ -408,7 +323,7 @@
 
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/[&<>"']/g, function(m) {
+            return str.replace(/[&<>"']/g, function (m) {
                 return ({
                     '&': '&amp;',
                     '<': '&lt;',
@@ -422,11 +337,11 @@
         function renderSoal() {
             soalTable.innerHTML = '';
 
-            if (!selectMateri.value) {
+            if (!selectPaket.value || !selectBahasa.value) {
                 soalTable.innerHTML = `
                     <tr>
                         <td colspan="5" class="text-center text-muted">
-                            Pilih materi terlebih dahulu.
+                            Pilih Paket dan Bahasa terlebih dahulu.
                         </td>
                     </tr>`;
                 return;
@@ -444,25 +359,25 @@
 
             currentSoal.forEach((s, index) => {
                 soalTable.innerHTML += `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${escapeHtml(s.pertanyaan)}</td>
-                    <td>
-                        <div>A. ${escapeHtml(s.opsi_a || '')}</div>
-                        <div>B. ${escapeHtml(s.opsi_b || '')}</div>
-                        <div>C. ${escapeHtml(s.opsi_c || '')}</div>
-                        <div>D. ${escapeHtml(s.opsi_d || '')}</div>
-                    </td>
-                    <td class="fw-bold">${escapeHtml(s.jawaban_benar)}</td>
-                    <td>
-                        <button class="btn btn-warning btn-sm mb-1" onclick="openEdit(${index})">
-                            Edit
-                        </button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteSoal(${index})">
-                            Hapus
-                        </button>
-                    </td>
-                </tr>`;
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${escapeHtml(s.pertanyaan)}</td>
+                        <td>
+                            <div>A. ${escapeHtml(s.opsi_a || '')}</div>
+                            <div>B. ${escapeHtml(s.opsi_b || '')}</div>
+                            <div>C. ${escapeHtml(s.opsi_c || '')}</div>
+                            <div>D. ${escapeHtml(s.opsi_d || '')}</div>
+                        </td>
+                        <td class="fw-bold">${escapeHtml(s.jawaban_benar)}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm mb-1" onclick="openEdit(${index})">
+                                Edit
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteSoal(${index})">
+                                Hapus
+                            </button>
+                        </td>
+                    </tr>`;
             });
         }
 
@@ -471,10 +386,11 @@
         ============================== */
 
         btnAddSoal.onclick = () => {
-            if (!selectMateri.value) {
-                alert('Pilih materi dulu.');
+            if (!selectPaket.value || !selectBahasa.value) {
+                alert('Pilih Paket dan Bahasa dulu.');
                 return;
             }
+
             document.getElementById('addPertanyaan').value = '';
             document.getElementById('addA').value = '';
             document.getElementById('addB').value = '';
@@ -492,8 +408,8 @@
             const opsiC = document.getElementById('addC').value.trim();
             const opsiD = document.getElementById('addD').value.trim();
             const correct = document.getElementById('addCorrect').value;
-            const kkm = document.getElementById('addKKM').value;
-            const idMateri = selectMateri.value;
+            const idPaket = selectPaket.value;
+            const idBahasa = selectBahasa.value;
 
             if (!pertanyaan || !opsiA || !opsiB || !opsiC || !opsiD) {
                 alert('Pertanyaan dan semua pilihan (A-D) wajib diisi.');
@@ -501,17 +417,18 @@
             }
 
             try {
-                // Jika belum ada uji sertifikasi untuk materi ini, buat dulu
+                // Kalau belum ada uji sertifikasi untuk kombinasi ini, buat dulu
                 if (!currentTes) {
                     const resTes = await api.post('/admin/sertifikasi/tes', {
-                        id_materi: idMateri,
-                        kkm: kkm || 70,
+                        id_paket: idPaket,
+                        id_bahasa: idBahasa,
+                        // tidak kirim kkm, backend otomatis set 70
                     });
                     currentTes = resTes.data.data || resTes.data;
-                    infoUjiText.textContent = `Uji Sertifikasi terdaftar (Kode Tes: ${currentTes.kode_tes}).`;
+                    infoUjiText.textContent =
+                        `Uji Sertifikasi terdaftar (Kode Tes: ${currentTes.kode_tes}).`;
                 }
 
-                // Tambah satu soal ke uji ini
                 await api.post('/admin/sertifikasi/soal/add', {
                     kode_tes: currentTes.kode_tes,
                     pertanyaan: pertanyaan,
@@ -534,7 +451,7 @@
            EDIT SOAL
         ============================== */
 
-        window.openEdit = function(index) {
+        window.openEdit = function (index) {
             const s = currentSoal[index];
             if (!s) return;
 
@@ -588,7 +505,7 @@
            HAPUS SOAL
         ============================== */
 
-        window.deleteSoal = async function(index) {
+        window.deleteSoal = async function (index) {
             const s = currentSoal[index];
             if (!s) return;
 
@@ -607,10 +524,8 @@
            EVENT HANDLER FILTER
         ============================== */
 
-        selectPaket.addEventListener('change', loadMateris);
-        selectBahasa.addEventListener('change', loadMateris);
-        selectLevel.addEventListener('change', loadMateris);
-        selectMateri.addEventListener('change', loadTesForMateri);
+        selectPaket.addEventListener('change', loadTesForCourse);
+        selectBahasa.addEventListener('change', loadTesForCourse);
 
         /* =============================
            INIT

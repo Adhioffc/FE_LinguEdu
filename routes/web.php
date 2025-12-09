@@ -138,54 +138,138 @@ Route::prefix('member')->middleware('auth')->group(function () {
     Route::get('/materi', function () {
         $userId = Auth::id();
 
-        // 1. Ambil Level Terakhir User dari Database
-        // Kita pakai Query Builder langsung biar praktis
+        // 1. Ambil level terakhir yang kebuka (last_unlocked_level)
         $userLevel = DB::table('registrasi_kursus')
             ->where('id_member', $userId)
-            ->value('last_unlocked_level') ?? 1; // Default 1 kalau belum ada data
+            ->value('last_unlocked_level') ?? 1;
 
-        // 2. Ambil Data Materi (Sama kayak sebelumnya)
+        // 2. Ambil semua materi user dari API backend
         $response = Http::get('http://127.0.0.1:8000/api/member/materi-list', [
             'id_member' => $userId,
         ]);
         $semuaMateri = collect($response->json('data') ?? []);
 
-        // 3. Logic Tombol Level 1 Selesai (Sama kayak sebelumnya)
-        $isLevel1Complete = $semuaMateri->where('level', 1)->every(function ($item) {
-            return $item['progress'] == 100;
-        });
-
-        // 4. Mapping Data (Sama kayak sebelumnya)
-        $materiLevel1 = $semuaMateri->where('level', 1)->map(function ($item) {
+        // ==== LEVEL 1 ====
+        $level1Collection = $semuaMateri->where('level', 1);
+        $isLevel1Complete = $level1Collection->count() > 0 &&
+            $level1Collection->every(fn($item) => $item['progress'] == 100);
+        $materiLevel1 = $level1Collection->map(function ($item) {
             return [
                 'title' => $item['judul'],
                 'desc' => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Belajar via Video',
                 'img' => 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80',
                 'progress' => $item['progress'],
-                'slug' => $item['slug']
+                'slug' => $item['slug'],
             ];
         });
 
-        $materiLevel2 = $semuaMateri->where('level', 2)->map(function ($item) {
+        // ==== LEVEL 2 ====
+        $level2Collection = $semuaMateri->where('level', 2);
+        $isLevel2Complete = $level2Collection->count() > 0 &&
+            $level2Collection->every(fn($item) => $item['progress'] == 100);
+        $materiLevel2 = $level2Collection->map(function ($item) {
             return [
                 'title' => $item['judul'],
                 'desc' => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Materi Lanjutan',
                 'img' => 'https://images.unsplash.com/photo-1593642634367-d91a135587b5?auto=format&fit=crop&w=800&q=80',
                 'progress' => $item['progress'],
-                'slug' => $item['slug']
+                'slug' => $item['slug'],
+            ];
+        });
+
+        // ==== LEVEL 3 ====
+        $level3Collection = $semuaMateri->where('level', 3);
+        $isLevel3Complete = $level3Collection->count() > 0 &&
+            $level3Collection->every(fn($item) => $item['progress'] == 100);
+        $materiLevel3 = $level3Collection->map(function ($item) {
+            return [
+                'title' => $item['judul'],
+                'desc' => Str::limit(strip_tags($item['teks_teori'] ?? ''), 100) ?: 'Materi Lanjutan',
+                'img' => 'https://images.unsplash.com/photo-1593642634367-d91a135587b5?auto=format&fit=crop&w=800&q=80',
+                'progress' => $item['progress'],
+                'slug' => $item['slug'],
             ];
         });
 
         return view('member.dashboard.materi', [
             'materiLevel1' => $materiLevel1,
             'materiLevel2' => $materiLevel2,
+            'materiLevel3' => $materiLevel3,
             'isLevel1Finished' => $isLevel1Complete,
-            'userLevel' => $userLevel // <--- KITA KIRIM DATA LEVEL KE VIEW
+            'isLevel2Finished' => $isLevel2Complete,
+            'isLevel3Finished' => $isLevel3Complete,
+            'userLevel' => $userLevel,
         ]);
     })->name('dashboard.materi');
 
     Route::view('/laporan', 'member.dashboard.laporan')->name('dashboard.laporan');
-    Route::view('/sertifikasi', 'member.dashboard.sertifikasi')->name('dashboard.sertifikasi');
+    Route::get('/sertifikasi', function () {
+        $userId = Auth::id();
+
+        $userLevel = DB::table('registrasi_kursus')
+            ->where('id_member', $userId)
+            ->value('last_unlocked_level') ?? 1;
+
+        return view('member.dashboard.sertifikasi', [
+            'userLevel' => $userLevel,
+        ]);
+    })->name('dashboard.sertifikasi');
+    // 👇 ROUTE BARU: HALAMAN UJIAN SERTIFIKASI
+    Route::get('/sertifikasi/ujian', function () {
+        $userId = Auth::id();
+
+        // Cek lagi level user biar nggak bisa langsung akses via URL
+        $userLevel = DB::table('registrasi_kursus')
+            ->where('id_member', $userId)
+            ->value('last_unlocked_level') ?? 1;
+
+        if ($userLevel < 4) {
+            // Belum buka sertifikasi → balikin ke halaman info
+            return redirect()
+                ->route('dashboard.sertifikasi')
+                ->with('error', 'Selesaikan dulu semua level sampai Level 3 sebelum ikut sertifikasi 😊');
+        }
+
+        // Nanti di sini kita bisa panggil API buat ambil soal sertifikasi
+        // Untuk sekarang kirim view kosong dulu
+        return view('member.dashboard.sertifikasi-ujian');
+    })->name('dashboard.sertifikasi.ujian');
+    Route::get('/sertifikasi/sertifikat', function () {
+        $user = Auth::user();
+        $userId = $user->id;
+
+        // Ambil hasil sertifikasi TERBARU yang LULUS untuk user ini
+        $hasil = DB::table('hasil_sertifikasi as h')
+            ->join('kursus as k', 'h.id_course', '=', 'k.id_course')
+            ->join('bahasa as b', 'k.id_bahasa', '=', 'b.id')
+            ->join('paket as p', 'k.id_paket', '=', 'p.id')
+            ->select(
+                'h.id_hasil',
+                'h.skor',
+                'h.tanggal',
+                'h.status',
+                'k.id_course',
+                'b.nama_bahasa',
+                'p.nama_paket'
+            )
+            ->where('h.id_member', $userId)
+            ->where('h.status', 'Lulus')        // cuma yang lulus
+            ->orderByDesc('h.tanggal')
+            ->first();
+
+        if (!$hasil) {
+            return redirect()
+                ->route('dashboard.sertifikasi')
+                ->with('error', 'Sertifikat belum tersedia. Ikuti dan lulus ujian sertifikasi terlebih dahulu.');
+        }
+
+        return view('member.dashboard.sertifikat', [
+            'user' => $user,
+            'hasil' => $hasil,
+        ]);
+    })->name('dashboard.sertifikasi.sertifikat');
+
+
 
     Route::get('/teori/{slug}', function ($slug) {
         // Panggil API backend
