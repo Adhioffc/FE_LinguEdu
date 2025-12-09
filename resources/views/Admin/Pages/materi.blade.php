@@ -28,7 +28,7 @@
                         <th class="p-4 text-left w-1/5">Kursus</th>
                         <th class="p-4 text-center w-1/12">Level</th>
                         <th class="p-4 text-center w-1/12">Tipe</th>
-                        <th class="p-4 text-left w-2/5">Konten / URL</th>
+                        <th class="p-4 text-left w-2/5">Konten</th>
                         <th class="p-4 text-center w-1/6">Aksi</th>
                     </tr>
                 </thead>
@@ -45,6 +45,15 @@
 
             <h2 class="text-2xl font-semibold mb-4 text-gray-800">Tambah Materi</h2>
 
+            {{-- FILE VIDEO (opsional) --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Upload Video (opsional)</label>
+                <input id="addVideoFile" type="file" accept="video/*" class="w-full border p-2 rounded-lg mt-1 text-sm">
+                <p class="text-xs text-gray-500 mt-1">
+                    Jika diisi, sistem akan menyimpan file ini sebagai video materi.
+                </p>
+            </div>
+
             {{-- PAKET --}}
             <div class="mb-4">
                 <label class="font-semibold text-sm">Paket</label>
@@ -60,10 +69,9 @@
                     <option value="">-- Pilih Bahasa --</option>
                 </select>
                 <p class="text-xs text-gray-500 mt-1">
-                    Sistem akan otomatis membuat/mencari kursus dari kombinasi paket + bahasa ini.
+                    Sistem akan otomatis membuat / mencari kursus dari kombinasi paket + bahasa ini.
                 </p>
             </div>
-
 
             {{-- LEVEL --}}
             <div class="mb-4">
@@ -88,7 +96,7 @@
                 <input id="addUrlVideo" type="text" class="w-full border p-2 rounded-lg mt-1 text-sm"
                     placeholder="https://... (YouTube / link video)">
                 <p class="text-xs text-gray-500 mt-1">
-                    Isi jika materi ini punya video. Kalau kosong, bagian video akan dikosongkan.
+                    Boleh diisi jika pakai YouTube / link lain. Jika hanya upload file, boleh dikosongkan.
                 </p>
             </div>
 
@@ -123,6 +131,16 @@
 
             <input type="hidden" id="editIndex">
 
+            {{-- FILE VIDEO (opsional) --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Upload Video Baru (opsional)</label>
+                <input id="editVideoFile" type="file" accept="video/*" class="w-full border p-2 rounded-lg mt-1 text-sm">
+                <p class="text-xs text-gray-500 mt-1">
+                    Jika diisi, akan mengganti file video yang sudah ada.
+                </p>
+                <p id="editVideoInfo" class="text-xs text-gray-500 mt-1"></p>
+            </div>
+
             {{-- PAKET --}}
             <div class="mb-4">
                 <label class="font-semibold text-sm">Paket</label>
@@ -138,7 +156,6 @@
                     <option value="">-- Pilih Bahasa --</option>
                 </select>
             </div>
-
 
             {{-- LEVEL --}}
             <div class="mb-4">
@@ -199,6 +216,7 @@
         </div>
     </div>
 @endsection
+
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
@@ -293,11 +311,11 @@
 
             if (!materis.length) {
                 tbody.innerHTML = `
-            <tr>
-                <td colspan="6" class="p-6 text-center text-gray-400 text-sm">
-                    Belum ada materi.
-                </td>
-            </tr>`;
+                    <tr>
+                        <td colspan="6" class="p-6 text-center text-gray-400 text-sm">
+                            Belum ada materi.
+                        </td>
+                    </tr>`;
                 return;
             }
 
@@ -329,52 +347,70 @@
                 }
 
                 const kontenParts = [];
+
+                // File video upload
+                if (m.video_url) {
+                    kontenParts.push(`
+                        <div class="flex items-center gap-2 text-xs text-emerald-700 mb-1">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full bg-emerald-50">
+                                📁 Video terupload
+                            </span>
+                        </div>
+                    `);
+                }
+
+                // URL video (YouTube / dll)
                 if (m.url_video) {
                     kontenParts.push(`
-                <a href="${m.url_video}" target="_blank"
-                   class="text-blue-600 underline text-xs break-all">
-                    ${m.url_video}
-                </a>
-            `);
+                        <a href="${m.url_video}" target="_blank"
+                           class="text-blue-600 underline text-xs break-all">
+                            ${m.url_video}
+                        </a>
+                    `);
                 }
+
+                // Teks teori
                 if (m.teks_teori) {
                     kontenParts.push(`
-                <p class="text-xs text-gray-700 whitespace-pre-line">
-                    ${previewText(m.teks_teori, 120)}
-                </p>
-            `);
+                        <p class="text-xs text-gray-700 whitespace-pre-line">
+                            ${previewText(m.teks_teori, 120)}
+                        </p>
+                    `);
                 }
-                const kontenPreview = kontenParts.length ? kontenParts.join('<div class="h-2"></div>') : '-';
+
+                const kontenPreview = kontenParts.length ?
+                    kontenParts.join('<div class="h-2"></div>') :
+                    '-';
 
                 const originalIndex = materis.findIndex(x => x.id_materi === m.id_materi);
 
                 tbody.innerHTML += `
-            <tr class="border-b hover:bg-gray-50">
-                <td class="p-4 font-semibold text-gray-800 align-top">
-                    ${m.judul}
-                </td>
-                <td class="p-4 text-sm text-gray-700 align-top">
-                    ${courseLabel(m)}
-                </td>
-                <td class="p-4 text-center align-top text-xs font-semibold">
-                    Level ${m.level || 1}
-                </td>
-                <td class="p-4 text-center align-top">
-                    ${tipeBadge}
-                </td>
-                <td class="p-4 align-top">
-                    ${kontenPreview}
-                </td>
-                <td class="p-4 text-center align-top space-x-2">
-                    <button onclick="openEditModal(${originalIndex})"
-                        class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-yellow-200 text-yellow-600 hover:bg-yellow-50"
-                        title="Edit">✏️</button>
-                    <button onclick="openDeleteModal(${originalIndex})"
-                        class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-red-200 text-red-600 hover:bg-red-50"
-                        title="Hapus">🗑</button>
-                </td>
-            </tr>
-        `;
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-4 font-semibold text-gray-800 align-top">
+                            ${m.judul}
+                        </td>
+                        <td class="p-4 text-sm text-gray-700 align-top">
+                            ${courseLabel(m)}
+                        </td>
+                        <td class="p-4 text-center align-top text-xs font-semibold">
+                            Level ${m.level || 1}
+                        </td>
+                        <td class="p-4 text-center align-top">
+                            ${tipeBadge}
+                        </td>
+                        <td class="p-4 align-top">
+                            ${kontenPreview}
+                        </td>
+                        <td class="p-4 text-center align-top space-x-2">
+                            <button onclick="openEditModal(${originalIndex})"
+                                class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-yellow-200 text-yellow-600 hover:bg-yellow-50"
+                                title="Edit">✏️</button>
+                            <button onclick="openDeleteModal(${originalIndex})"
+                                class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-red-200 text-red-600 hover:bg-red-50"
+                                title="Hapus">🗑</button>
+                        </td>
+                    </tr>
+                `;
             });
         }
 
@@ -391,6 +427,7 @@
             document.getElementById('addUrlVideo').value = '';
             document.getElementById('addTeksTeori').value = '';
             document.getElementById('addLevel').value = 1;
+            document.getElementById('addVideoFile').value = '';
 
             fillPaketSelect(document.getElementById('addPaket'));
             fillBahasaSelect(document.getElementById('addBahasa'));
@@ -411,6 +448,7 @@
             const judul = document.getElementById('addJudul').value.trim();
             const url = document.getElementById('addUrlVideo').value.trim();
             const teks = document.getElementById('addTeksTeori').value.trim();
+            const videoFile = document.getElementById('addVideoFile').files[0];
 
             if (!id_paket || !id_bahasa || !judul) {
                 alert('Paket, bahasa, level, dan judul wajib diisi');
@@ -423,22 +461,26 @@
                 return;
             }
 
-            if (!url && !teks) {
-                alert('Isi minimal URL video atau teks teori.');
+            if (!videoFile && !url && !teks) {
+                alert('Isi minimal upload video, URL video, atau teks teori.');
                 return;
             }
 
-            const payload = {
-                id_paket: id_paket,
-                id_bahasa: id_bahasa,
-                level: level,
-                judul: judul,
-                url_video: url || null,
-                teks_teori: teks || null,
-            };
+            const formData = new FormData();
+            formData.append('id_paket', id_paket);
+            formData.append('id_bahasa', id_bahasa);
+            formData.append('level', level);
+            formData.append('judul', judul);
+            if (url) formData.append('url_video', url);
+            if (teks) formData.append('teks_teori', teks);
+            if (videoFile) formData.append('video_file', videoFile);
 
             try {
-                await api.post('/admin/materi', payload);
+                await api.post('/admin/materi', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
                 closeAddModal();
                 await loadMateri();
             } catch (e) {
@@ -466,6 +508,16 @@
             document.getElementById('editJudul').value = m.judul;
             document.getElementById('editUrlVideo').value = m.url_video || '';
             document.getElementById('editTeksTeori').value = m.teks_teori || '';
+            document.getElementById('editVideoFile').value = '';
+
+            let info = '';
+            if (m.video_url) {
+                info += 'Saat ini sudah ada file video terupload.';
+            }
+            if (m.url_video) {
+                info += (info ? ' ' : '') + 'Link video sekarang: ' + m.url_video;
+            }
+            document.getElementById('editVideoInfo').textContent = info;
 
             const modal = document.getElementById('editModal');
             modal.classList.remove('hidden');
@@ -487,6 +539,7 @@
             const judul = document.getElementById('editJudul').value.trim();
             const url = document.getElementById('editUrlVideo').value.trim();
             const teks = document.getElementById('editTeksTeori').value.trim();
+            const videoFile = document.getElementById('editVideoFile').files[0];
 
             if (!id_paket || !id_bahasa || !judul) {
                 alert('Paket, bahasa, level, dan judul wajib diisi');
@@ -499,22 +552,27 @@
                 return;
             }
 
-            if (!url && !teks) {
-                alert('Isi minimal URL video atau teks teori.');
+            if (!videoFile && !url && !teks && !m.video_url && !m.url_video && !m.teks_teori) {
+                alert('Isi minimal upload video, URL video, atau teks teori.');
                 return;
             }
 
-            const payload = {
-                id_paket: id_paket,
-                id_bahasa: id_bahasa,
-                level: level,
-                judul: judul,
-                url_video: url || null,
-                teks_teori: teks || null,
-            };
+            const formData = new FormData();
+            formData.append('_method', 'PUT');
+            formData.append('id_paket', id_paket);
+            formData.append('id_bahasa', id_bahasa);
+            formData.append('level', level);
+            formData.append('judul', judul);
+            formData.append('url_video', url); // boleh kosong string
+            formData.append('teks_teori', teks); // boleh kosong string
+            if (videoFile) formData.append('video_file', videoFile);
 
             try {
-                await api.put(`/admin/materi/${m.id_materi}`, payload);
+                await api.post(`/admin/materi/${m.id_materi}`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
                 closeEditModal();
                 await loadMateri();
             } catch (e) {

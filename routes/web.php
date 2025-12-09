@@ -214,18 +214,17 @@ Route::prefix('member')->middleware('auth')->group(function () {
     // VIDEO ROUTE
     Route::get('/video/{slug}', function ($slug) {
         $response = Http::get("http://127.0.0.1:8000/api/materi/{$slug}");
-        if ($response->failed()) {
-            abort(404, 'Materi tidak ditemukan di API.');
-        }
         $materi = $response->json('data');
+
+        // debug:
+        // dd($materi);
+
         return view('member.dashboard.video', [
             'slug' => $slug,
-            'materi' => $materi
+            'materi' => $materi,
         ]);
     })->name('member.video');
 });
-
-
 // ======== PROFILE ROUTES (LOGIC LANGSUNG) ========
 Route::middleware(['auth'])->group(function () {
     Route::view('/profile', 'profile.dashboard')->name('dashboard.profile');
