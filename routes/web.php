@@ -213,9 +213,9 @@ Route::prefix('member')->middleware('auth')->group(function () {
 
         $userLevel = $registrasi->last_unlocked_level ?? 1;
         $levelLabel = match ($userLevel) {
-            1 => 'Beginner',
-            2 => 'Intermediate',
-            3 => 'Advanced',
+            1       => 'Beginner',
+            2       => 'Intermediate',
+            3       => 'Advanced',
             default => 'Level ' . $userLevel,
         };
 
@@ -226,25 +226,25 @@ Route::prefix('member')->middleware('auth')->group(function () {
 
         $hasil = collect();
         $summary = [
-            'total' => 0,
-            'completed' => 0,
-            'avg_score' => 0,
+            'total'      => 0,
+            'completed'  => 0,
+            'avg_score'  => 0,
         ];
 
         if ($response->ok()) {
-            $rows = collect($response->json('data') ?? []);
+            $rows  = collect($response->json('data') ?? []);
             $hasil = $rows;
 
-            $summary['total'] = $rows->count();
+            $summary['total']     = $rows->count();
             $summary['completed'] = $rows->where('desc', 'Lulus')->count();
             $summary['avg_score'] = $rows->count() ? round($rows->avg('skor')) : 0;
         }
 
         return view('member.dashboard.laporan', [
-            'userLevel' => $userLevel,
+            'userLevel'  => $userLevel,
             'levelLabel' => $levelLabel,
-            'hasil' => $hasil,
-            'summary' => $summary,
+            'hasil'      => $hasil,
+            'summary'    => $summary,
         ]);
     })->name('dashboard.laporan');
     Route::get('/sertifikasi', function () {

@@ -100,12 +100,12 @@
                     class="hidden absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-md py-2">
                     <a href="{{ route('dashboard.profile') }}"
                         class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-                        ✏️ Edit Profil
+                        Profile
                     </a>
 
                     <a href="{{ route('logout.simulasi') }}"
                         class="block px-4 py-2 text-red-600 font-semibold hover:bg-gray-100">
-                        🚪 Keluar
+                        LogOut
                     </a>
                 </div>
             </div>

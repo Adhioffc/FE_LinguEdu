@@ -4,12 +4,6 @@
 
 @section('content')
     <div class="container py-5">
-
-        {{-- NAVIGASI --}}
-        <a href="/admin/dashboard" class="text-primary d-block mb-3">
-            ← Kembali ke Dashboard
-        </a>
-
         <h2 class="fw-bold mb-2">📝 Manajemen Kuis & Evaluasi</h2>
         <p class="text-muted mb-4">Kelola soal kuis berdasarkan Paket, Bahasa, Level, dan Materi.</p>
 

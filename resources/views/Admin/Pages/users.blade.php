@@ -9,14 +9,6 @@
         {{-- Header --}}
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold text-gray-800">Manajemen User</h1>
-
-            <div class="flex items-center space-x-4">
-                <a href="{{ route('admin.dashboard') }}"
-                    class="bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition font-semibold">
-                    ⬅ Kembali ke Dashboard
-                </a>
-                <div class="text-sm text-gray-600 font-semibold" id="clock"></div>
-            </div>
         </div>
 
         {{-- Menu Navigasi Tab --}}

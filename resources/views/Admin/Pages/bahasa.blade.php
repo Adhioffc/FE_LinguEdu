@@ -12,10 +12,6 @@
                 class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 shadow text-sm font-semibold">
                 + Tambah Bahasa
             </button>
-            <button onclick="showPage('list')"
-                class="mt-4 bg-gray-400 px-4 py-2 text-white rounded-lg hover:bg-gray-500 transition">
-                Kembali
-            </button>
         </div>
 
 
