@@ -202,7 +202,51 @@ Route::prefix('member')->middleware('auth')->group(function () {
         ]);
     })->name('dashboard.materi');
 
-    Route::view('/laporan', 'member.dashboard.laporan')->name('dashboard.laporan');
+    Route::get('/laporan', function () {
+        $userId = Auth::id();
+
+        // ambil level dari registrasi_kursus
+        $registrasi = DB::table('registrasi_kursus')
+            ->where('id_member', $userId)
+            ->orderByDesc('created_at')
+            ->first();
+
+        $userLevel = $registrasi->last_unlocked_level ?? 1;
+        $levelLabel = match ($userLevel) {
+            1 => 'Beginner',
+            2 => 'Intermediate',
+            3 => 'Advanced',
+            default => 'Level ' . $userLevel,
+        };
+
+        // 🔹 PANGGIL API BACKEND
+        $response = Http::get('http://127.0.0.1:8000/api/admin/hasil-tes', [
+            'member' => $userId,   // ini akan nge-filter di index()
+        ]);
+
+        $hasil = collect();
+        $summary = [
+            'total' => 0,
+            'completed' => 0,
+            'avg_score' => 0,
+        ];
+
+        if ($response->ok()) {
+            $rows = collect($response->json('data') ?? []);
+            $hasil = $rows;
+
+            $summary['total'] = $rows->count();
+            $summary['completed'] = $rows->where('desc', 'Lulus')->count();
+            $summary['avg_score'] = $rows->count() ? round($rows->avg('skor')) : 0;
+        }
+
+        return view('member.dashboard.laporan', [
+            'userLevel' => $userLevel,
+            'levelLabel' => $levelLabel,
+            'hasil' => $hasil,
+            'summary' => $summary,
+        ]);
+    })->name('dashboard.laporan');
     Route::get('/sertifikasi', function () {
         $userId = Auth::id();
 
