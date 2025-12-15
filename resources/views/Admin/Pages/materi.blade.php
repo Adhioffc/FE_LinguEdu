@@ -45,14 +45,7 @@
 
             <h2 class="text-2xl font-semibold mb-4 text-gray-800">Tambah Materi</h2>
 
-            {{-- FILE VIDEO (opsional) --}}
-            <div class="mb-4">
-                <label class="font-semibold text-sm">Upload Video (opsional)</label>
-                <input id="addVideoFile" type="file" accept="video/*" class="w-full border p-2 rounded-lg mt-1 text-sm">
-                <p class="text-xs text-gray-500 mt-1">
-                    Jika diisi, sistem akan menyimpan file ini sebagai video materi.
-                </p>
-            </div>
+
 
             {{-- PAKET --}}
             <div class="mb-4">
@@ -88,6 +81,14 @@
                 <label class="font-semibold text-sm">Judul Materi</label>
                 <input id="addJudul" type="text" class="w-full border p-2 rounded-lg mt-1 text-sm"
                     placeholder="Contoh: Pengantar Grammar Dasar">
+            </div>
+            {{-- FILE VIDEO (opsional) --}}
+            <div class="mb-4">
+                <label class="font-semibold text-sm">Upload Video (opsional)</label>
+                <input id="addVideoFile" type="file" accept="video/*" class="w-full border p-2 rounded-lg mt-1 text-sm">
+                <p class="text-xs text-gray-500 mt-1">
+                    Jika diisi, sistem akan menyimpan file ini sebagai video materi.
+                </p>
             </div>
 
             {{-- URL VIDEO (opsional) --}}

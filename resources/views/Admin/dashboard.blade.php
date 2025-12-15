@@ -155,11 +155,11 @@
                 </a>
 
                 {{-- Setting Sertifikat --}}
-                <a href="{{ route('admin.sertifikat') }}"
+                {{-- <a href="{{ route('admin.sertifikat') }}"
                     class="p-4 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition shadow-sm block">
                     <h3 class="text-indigo-700 font-semibold mb-1">🎓 Setting Sertifikat</h3>
                     <p class="text-sm text-gray-600">Template & pengaturan sertifikat.</p>
-                </a>
+                </a> --}}
 
             </div>
         </div>

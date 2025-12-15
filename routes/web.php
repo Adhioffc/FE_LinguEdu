@@ -10,7 +10,14 @@ use Illuminate\Support\Str;
 
 // ================= FRONTEND ROUTES =================
 
-Route::view('/', 'home')->name('home');
+Route::get('/', function () {
+    // Panggil API backend untuk ambil daftar paket
+    $response = Http::get('http://127.0.0.1:8000/api/paket');
+
+    $paket = $response->json('data') ?? [];   // sama seperti di register
+
+    return view('home', compact('paket'));
+})->name('home');
 
 // ======== AUTH ========
 
@@ -213,9 +220,9 @@ Route::prefix('member')->middleware('auth')->group(function () {
 
         $userLevel = $registrasi->last_unlocked_level ?? 1;
         $levelLabel = match ($userLevel) {
-            1       => 'Beginner',
-            2       => 'Intermediate',
-            3       => 'Advanced',
+            1 => 'Beginner',
+            2 => 'Intermediate',
+            3 => 'Advanced',
             default => 'Level ' . $userLevel,
         };
 
@@ -226,25 +233,25 @@ Route::prefix('member')->middleware('auth')->group(function () {
 
         $hasil = collect();
         $summary = [
-            'total'      => 0,
-            'completed'  => 0,
-            'avg_score'  => 0,
+            'total' => 0,
+            'completed' => 0,
+            'avg_score' => 0,
         ];
 
         if ($response->ok()) {
-            $rows  = collect($response->json('data') ?? []);
+            $rows = collect($response->json('data') ?? []);
             $hasil = $rows;
 
-            $summary['total']     = $rows->count();
+            $summary['total'] = $rows->count();
             $summary['completed'] = $rows->where('desc', 'Lulus')->count();
             $summary['avg_score'] = $rows->count() ? round($rows->avg('skor')) : 0;
         }
 
         return view('member.dashboard.laporan', [
-            'userLevel'  => $userLevel,
+            'userLevel' => $userLevel,
             'levelLabel' => $levelLabel,
-            'hasil'      => $hasil,
-            'summary'    => $summary,
+            'hasil' => $hasil,
+            'summary' => $summary,
         ]);
     })->name('dashboard.laporan');
     Route::get('/sertifikasi', function () {

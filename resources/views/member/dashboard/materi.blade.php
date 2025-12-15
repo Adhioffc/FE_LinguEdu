@@ -44,8 +44,8 @@
             @forelse ($materiLevel1 as $m)
                 <div class="col-12 col-sm-6 col-lg-4 mb-4">
                     <div class="card shadow-sm h-100">
-                        {{-- <img src="{{ $m['img'] }}" class="card-img-top" alt="{{ $m['title'] }}"
-                            onerror="this.src='https://via.placeholder.com/800x400?text=No+Image';"> --}}
+                        <img src="{{ $m['img'] }}" class="card-img-top" alt="{{ $m['title'] }}"
+                            onerror="this.src='https://via.placeholder.com/800x400?text=No+Image';">
                         <div class="card-body text-center d-flex flex-column justify-content-between">
                             <div>
                                 <h5 class="card-title">{{ $m['title'] }}</h5>
@@ -213,7 +213,7 @@
                         didOpen: () => Swal.showLoading()
                     });
 
-                    fetch('http://127.0.0.1:8000/api/member/level-up', {
+                    fetch('{{ url("/api/member/level-up") }}', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',

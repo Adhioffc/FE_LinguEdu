@@ -104,14 +104,14 @@
                            : 'border-transparent text-gray-700 hover:text-indigo-600 hover:border-indigo-200' }}">
                         Sertifikasi
                     </a>
-
+{{-- 
                     <a href="{{ route('admin.sertifikat') }}"
                         class="pb-1 border-b-2 transition
                        {{ request()->routeIs('admin.sertifikat')
                            ? 'border-indigo-600 text-indigo-600'
                            : 'border-transparent text-gray-700 hover:text-indigo-600 hover:border-indigo-200' }}">
                         Sertifikat
-                    </a>
+                    </a> --}}
                 </nav>
             </div>
 
