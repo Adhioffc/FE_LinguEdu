@@ -230,7 +230,11 @@
             try {
                 teoriTable.innerHTML = `
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">
+                        <td class="text-center text-muted py-4">&nbsp;</td>
+                        <td class="text-center text-muted py-4">&nbsp;</td>
+                        <td class="text-center text-muted py-4">&nbsp;</td>
+                        <td class="text-center text-muted py-4">&nbsp;</td>
+                        <td class="text-center text-muted py-4">
                             <div class="spinner-border spinner-border-sm me-2" role="status"></div> Memuat data teori...
                         </td>
                     </tr>`;
@@ -243,7 +247,11 @@
                 console.error(e);
                 teoriTable.innerHTML = `
                     <tr>
-                        <td colspan="5" class="text-center text-danger py-4">
+                        <td class="text-center text-danger py-4">&nbsp;</td>
+                        <td class="text-center text-danger py-4">&nbsp;</td>
+                        <td class="text-center text-danger py-4">&nbsp;</td>
+                        <td class="text-center text-danger py-4">&nbsp;</td>
+                        <td class="text-center text-danger py-4">
                             <i class="bi bi-exclamation-triangle-fill me-1"></i> Gagal memuat data teori.
                         </td>
                     </tr>`;
@@ -262,7 +270,11 @@
             if (!listTeori.length) {
                 teoriTable.innerHTML = `
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">
+                        <td class="text-center text-muted py-4">&nbsp;</td>
+                        <td class="text-center text-muted py-4">&nbsp;</td>
+                        <td class="text-center text-muted py-4">&nbsp;</td>
+                        <td class="text-center text-muted py-4">&nbsp;</td>
+                        <td class="text-center text-muted py-4">
                             <i class="bi bi-info-circle me-1"></i> Belum ada data teori. Klik <strong>Tambah Teori</strong> untuk membuat.
                         </td>
                     </tr>`;
